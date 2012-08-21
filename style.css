@@ -1,0 +1,141 @@
+html, body {
+	font-family: Verdana, Arial, Helvetica, sans-serif;
+}
+
+/* INFO TOKEN */
+
+.info-token {
+	position: relative;
+	font-family: Verdana;
+	font-size: 12px;
+	display: inline-block;
+	height: 16px;
+	width: 16px;
+	background-image: url('info.png');
+
+}
+
+.info-token-msg {
+	display: none;
+	position: absolute;
+	left: auto;
+}
+
+.info-token:hover .info-token-msg {
+	display: block;	
+}
+
+.info-token-msg p {
+	margin: 0 0 0 25px;
+	padding: 5px;
+	width: 160px;
+	border: 1px solid black;
+	box-shadow: 3px 3px 1px .25px #bbb;
+}
+
+/* CARDS */
+
+.card {
+	width: 200px;
+	height: 320px;
+	border: 3px solid #000;
+    float: left;
+    margin: 20px 0 10px 20px;
+}
+
+.card .card-part {
+	float: left;
+	text-align: center;
+}
+
+.card .card-header {
+	width: inherit;
+	height: 49px;
+	border-bottom: 1px solid #000;
+    text-align: left;
+}
+
+.card .card-body {
+	width: height;
+	height: 169px;
+}
+
+.card .card-footer {
+	width: inherit;
+	height: 20px;
+	border-top: 1px solid #000;
+	font-weight: bold;
+	font-style: italic;
+    font-size: 13px;
+}
+
+.card .card-separator {
+	width: inherit;
+	height: 20px;
+	background-color: #000;
+	color: #FFF;
+	text-align: left;
+	font-size: 13px;
+	font-weight: bold;
+}
+
+.card .card-separator span {
+	padding-left: 5px;
+}
+
+.card-header-icon {
+	display: inline-block;
+	height: 32px;
+	width: 33px;
+    margin: 10px 0 0 5px;
+	background-image: url('available.png');
+    float: left;
+}
+
+.card-header-name {
+	font-size: 28px;
+	font-weight: bold;
+    margin: 7px 0 0 5px;
+    float: left;	
+}
+
+.card-tutors {
+	height: auto;
+	max-height: 100px;
+}
+
+.card .card-separator .card-button {
+	float: right;
+	margin: 1px 0 0 0;
+	padding: 0;
+	border: 1px solid #FFF;
+	font-size: 10px;
+}
+
+.card .card-separator .card-button a {
+	color: #FFF;
+	text-decoration: none;
+	padding: 0 4px;
+}
+
+.card .card-separator .card-button a:hover {
+	color: #000;
+	background-color: #FFF;
+	cursor: pointer;
+}
+
+.card-tutors ul {
+	margin: 0;
+	padding: 0;
+	list-style: none;
+	font-size: 13px;
+	margin-left: 5px;
+}
+
+.card-tutors ul li span:first-child {
+	display: inline-block;
+	height: 11px;
+	width: 11px;
+	background-image: url('available-small.png');
+	margin-right: 5px;
+}
