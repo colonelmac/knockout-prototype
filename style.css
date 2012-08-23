@@ -36,45 +36,46 @@ html, body {
 /* CARDS */
 
 .card {
-	width: 200px;
-	height: 320px;
-	border: 3px solid #000;
+	width: 300px;
+	height: 500px;
+	border: 3px solid #92b533;
+    background-color: #ebf2d3;
+    color: #663605;
     float: left;
     margin: 20px 0 10px 20px;
 }
 
-.card .card-part {
-	float: left;
-	text-align: center;
+.card .card-header table {
+    background-color: #92b533;
+    display: block;
+    width: 100%;
 }
 
-.card .card-header {
-	width: inherit;
-	height: 49px;
-	border-bottom: 1px solid #000;
-    text-align: left;
+.card .card-header-name {
+    text-align: center;
+    vertical-align: middle;
+    width: 100%;
+	color: #663605;
 }
 
-.card .card-body {
-	width: height;
-	height: 169px;
+.card .card-graph {
+    margin: 0.5em;
 }
 
 .card .card-footer {
 	width: inherit;
 	height: 20px;
-	border-top: 1px solid #000;
+	border-top: 1px solid #92b533;
 	font-weight: bold;
 	font-style: italic;
     font-size: 13px;
 }
 
 .card .card-separator {
-	width: inherit;
-	height: 20px;
-	background-color: #000;
-	color: #FFF;
+	background-color: #c8dd88;
+	color: #663605;
 	text-align: left;
+    padding: 0.5em;
 	font-size: 13px;
 	font-weight: bold;
 }
@@ -102,25 +103,27 @@ html, body {
 .card-tutors {
 	height: auto;
 	max-height: 100px;
+    padding: 0.5em;
+    text-align: left;
 }
 
 .card .card-separator .card-button {
 	float: right;
 	margin: 1px 0 0 0;
 	padding: 0;
-	border: 1px solid #FFF;
+	border: 1px solid #663605;
 	font-size: 10px;
 }
 
 .card .card-separator .card-button a {
-	color: #FFF;
+	color: #663605;
 	text-decoration: none;
 	padding: 0 4px;
 }
 
 .card .card-separator .card-button a:hover {
-	color: #000;
-	background-color: #FFF;
+	color: #c8dd88;
+	background-color: #663605;
 	cursor: pointer;
 }
 
