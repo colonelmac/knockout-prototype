@@ -13,10 +13,14 @@
     <link rel="shortcut icon" type="image/png" href="/public/images/favicon.ico" />
     <link rel="stylesheet" type="text/css" href="style.css" />
     <link rel="stylesheet" type="text/css" href="queue.css" />
+    <link rel="stylesheet" type="text/css" href="jquery.jqplot.min.css" />
     
     <script type="text/javascript" language="javascript"  src="/public/javascripts/jquery-1.7.1.min.js"></script>
     <script type="text/javascript" language="javascript"  src="/public/javascripts/knockout-2.1.0.js"></script>
     <script type="text/javascript" language="javascript"  src="/public/javascripts/sammy/sammy-0.7.1.min.js"></script>
+    <script type="text/javascript" language="javascript"  src="/public/javascripts/jquery.jqplot.min.js"></script>
+    <script type="text/javascript" language="javascript"  src="/public/javascripts/jqplot.dateAxisRenderer.min.js"></script>
+    <script type="text/javascript" language="javascript"  src="/public/javascripts/jqplot.highlighter.min.js"></script>
 </head>
 <body>
 
@@ -39,32 +43,32 @@
     
 <div id="page-wrapper">
     <div id="cards" class="cards" data-bind="foreach: cards">
-		<div class="card">
-			<div class="card-part card-header">
-				<span class="card-header-icon"></span>
-				<span class="card-header-name" data-bind="text: name"></span>
-			</div>
-			<div class="card-part card-separator">
-				<span class="title">TUTORS</span>
-				<span class="card-button"><a data-bind="click: $parent.joinRoom">JOIN</a></span>
-			</div>
-			<div class="card-part card-tutors">
-				<ul data-bind="foreach: tutors">
-					<li><span></span><span data-bind="text: name"></span></li>
-				</ul>
-			</div>
-			<div class="card-part card-separator">
-				<span>QUEUE STATS</span>
-			</div>
-
-			<div class="card-part card-body">
-				Status go here ;)
-			</div>
-
-			<div class="card-part card-footer">
-				Expected close at 11:00PM
-			</div>
-		</div>
+        <div class="card">
+            <div class="card-header">
+                <table>
+                    <tr>
+                        <td><span class="card-header-icon"></span></td>
+                        <td class='card-header-name'><h3><a href="#" data-bind="text: name"></a></h3></td>
+                    </tr>
+                </table>
+            </div>
+            <div class="card-separator">
+                <span>TUTORS <span data-bind="text: '(' + tutors().length + ')'"></span></span>
+                <span class="card-button"><a data-bind="click: $parent.joinRoom">JOIN</a></span>
+            </div>
+            <div class="card-tutors">
+                <ul data-bind="foreach: tutors">
+                    <li><span></span><span data-bind="text: name"></span></li>
+                </ul>
+            </div>
+            <div class="card-separator">
+                <div class="card-title">
+                    <span class="title">QUEUE STATS</span>
+                </div>
+            </div>
+            <div class="card-part card-graph card-body" data-bind="graph: true"></div>
+            <div class="card-part card-footer">Expected Close: 24 hours</div>
+        </div>
     </div>
     
     <div id="queue" style="display: none"> <!-- data-bind="with: queueViewModel" -->
@@ -72,7 +76,7 @@
 		    <div class="sidebar-content">
 			    <div class="sidebar-part sidebar-header">
 				    <span class="sidebar-header-icon"></span>
-				    <span class="sidebar-header-name">CSE 110</span>
+				    <span class="sidebar-header-name" data-bind="text: name"></span>
 			    </div>
 
 			    <div class="sidebar-part sidebar-separator">
@@ -137,7 +141,15 @@
 <script>
 
     $(document).ready(function () {
-    
+
+        ko.bindingHandlers.graph = {
+            update: function(element, v, a, viewModel) {
+                if ("graph" in viewModel) {
+                    viewModel.graph(element);
+                }
+            }
+        }
+
         /*
          * CardModel - used to model the data represented on a card
          *
@@ -145,16 +157,71 @@
          *  TutorModel
          */
 
-        var CardModel = function (n, t, s) {
+        var CardModel = function (n, t, s1, s2) {
             var self = this;
 
             self.name        = ko.observable(n);
             self.tutors      = ko.observableArray(t);
-            self.stats       = ko.observableArray(s);
+            self.stats       = {
+                today: ko.observableArray(s1),
+                average: ko.observableArray(s2)
+            };
+
+            self.size        = ko.computed(function() {
+                return {
+                    today: self.stats.today()[self.stats.today().length-1][1],
+                    average: self.stats.average()[self.stats.average().length-1][1]
+                }
+                
+            });
+            self.wait        = ko.computed(function() {
+                return self.size();
+            });
 
             self.time        = ko.observable();
-            self.isClosed    = ko.observable();
+            self.isClosed    = ko.observable(false);
             self.close       = function (expected) { };
+
+            self.graph       = function (element) {
+                $(element).attr("id", "card-graph-current");
+                var plottable = self.isClosed() ? [self.stats.average()] : [self.stats.average(), self.stats.today()],
+                    size      = self.size(),
+                    wait      = self.wait(),
+                    graph     = $.jqplot("card-graph-current", plottable, {
+                        seriesDefaults: { fill: true, fillAlpha: '0.7' },
+                        series: [
+                            {label: "Average (Size: " + size.average + "/Wait: " + wait.average + " minutes)" }, 
+                            {label: "Today (Size: " + size.today + "/Wait: " + wait.today + " minutes)" }
+                        ],
+                        grid: {
+                            drawGridlines: false,
+                        },
+                        legend: { 
+                            show: true,
+                            placement: "outsideGrid",
+                            location: "s",
+                            marginRight: 0,
+                            marginLeft: 0,
+                        },
+                        axes: {
+                            xaxis: {
+                                renderer:$.jqplot.DateAxisRenderer,
+                                tickOptions: {formatString: "%#I %p"},
+                                min: self.stats.average()[0][0],
+                                max: self.stats.average()[self.stats.average().length-1][0],
+                                tickInterval: "2 hours",
+                            }, 
+                            yaxis: { min: 0 },
+                        },
+                        highlighter: {
+                            show: true,
+                            sizeAdjust: 7.5,
+                            tooltipAxes: 'y',
+                        }
+                });
+                $(element).removeAttr("id");
+                return true;
+            };
         };
 
         /*
@@ -203,7 +270,7 @@
          *  TutorModel
          */
 
-        var CardViewModel = function () {
+        var CardViewModel = function (queueViewModel) {
             var self  = this,
                 savedCards = null;
 
@@ -218,6 +285,7 @@
                 queueViewModel.resizeSidebar();
                 queueViewModel.bindShowHideButtons();
                 queueViewModel.tutors(card.tutors());
+                queueViewModel.name(card.name());
                 queueViewModel.messages([
                     new MessageModel(new StudentModel('Derrick McMillen', 'waiting'), card.tutors()[0], 'I fucked up bad...'),
                     new MessageModel(new StudentModel('Chase Murphy', 'waiting'), card.tutors()[0], 'My linked list is unlinked')
@@ -240,6 +308,8 @@
                 savedMessages = null;
 
                 /* FIELDS */
+
+                self.name = ko.observable();
 
                 self.tutors = ko.observableArray();
                 self.selectedTutor = ko.observable();
@@ -293,25 +363,32 @@
                 };
         };
 
+        /* This should be getting data from the server, but 
+         * for now just generate random data */
+        var generateData = function(max){
+            max = max || new Date().getHours();
+            var output = [],
+                i;
+            for (i=8; i<=max; i+=2){
+                output.push([i + ":00", Math.floor(Math.random()*30)]);
+            }
+            return output;
+        }
+
         var AppViewModel = function () {
             var self = this;
 
-            self.cardViewModel = new CardViewModel();
             self.queueViewModel = new QueueViewModel();
+            self.cardViewModel = new CardViewModel(self.queueViewModel);
             
             ko.applyBindings(self.cardViewModel, document.getElementById('cards'));
             ko.applyBindings(self.queueViewModel, document.getElementById('queue')); 
         
-            Sammy(function () {
-                this.get('#courses', function () {
-                    cardViewModel.cards([
-                        new CardModel('CSE 80', [new TutorModel('Herp Derpington', 'Busy')], []), 
-                        new CardModel('CSE 132A', [new TutorModel('Vinay V.', 'Available')], [])
-                    ]);
-                });
+            self.cardViewModel.cards([
+                new CardModel('CSE 80', [new TutorModel('Herp Derpington', 'Busy')], generateData(), generateData(20)), 
+                new CardModel('CSE 132A', [new TutorModel('Vinay V.', 'Available')], generateData(), generateData(20))
+            ]);
 
-                this.get('', function () { this.app.runRoute('#courses'); });
-            });
         };
 
         var app = new AppViewModel();
