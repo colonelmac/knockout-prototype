@@ -317,8 +317,22 @@
                 queueViewModel.name(card.name());
 
                 queueViewModel.messages([
-                    new MessageModel(new StudentModel('Derrick McMillen', 'waiting'), card.tutors()[0], 'I fucked up bad...'),
-                    new MessageModel(new StudentModel('Chase Murphy', 'waiting'), card.tutors()[0], 'My linked list is unlinked')
+                    new MessageModel(new StudentModel('Derrick McMillen', 'waiting'), card.tutors()[0], 'Lost... no more hope'),
+                    new MessageModel(new StudentModel('Chase Murphy', 'waiting'), card.tutors()[0], 'My linked list is unlinked'),
+                    new MessageModel(new StudentModel('Anthony Mao', 'waiting'), card.tutors()[0], 'THE MAO EXPERIENCE ENQUEUED!'),
+                    new MessageModel(new StudentModel('Ian Foster', 'waiting'), card.tutors()[0], 'I have not slept since 2010'),
+                    new MessageModel(new StudentModel('Vinay Ventakesh', 'waiting'), card.tutors()[0], 'Herp derp'),
+                    new MessageModel(new StudentModel('Alan A', 'waiting'), card.tutors()[0], 'Herp derp'),
+                    new MessageModel(new StudentModel('Joel Jauregui', 'waiting'), card.tutors()[0], 'Herp derp'),
+                    new MessageModel(new StudentModel('Calvin Harris', 'waiting'), card.tutors()[0], 'I feel so close to you right now...'),
+                    new MessageModel(new StudentModel('Ambuj Punn', 'waiting'), card.tutors()[0], 'Herp derp'),
+                    new MessageModel(new StudentModel('Alan A', 'waiting'), card.tutors()[0], 'Herp derp'),
+                    new MessageModel(new StudentModel('Alan A', 'waiting'), card.tutors()[0], 'Herp derp'),
+                    new MessageModel(new StudentModel('Alan A', 'waiting'), card.tutors()[0], 'Herp derp'),
+                    new MessageModel(new StudentModel('Alan A', 'waiting'), card.tutors()[0], 'Herp derp'),
+                    new MessageModel(new StudentModel('Alan A', 'waiting'), card.tutors()[0], 'Herp derp'),
+                    new MessageModel(new StudentModel('Alan A', 'waiting'), card.tutors()[0], 'Herp derp'),
+                    new MessageModel(new StudentModel('Alan A', 'waiting'), card.tutors()[0], 'Herp derp')
                 ]); 
             
                 app.state(app.states.QUEUE);
@@ -353,8 +367,11 @@
 
                 self.modules = ko.observableArray([
                     { template: 'info-box-module-template', title: 'Current Ticket', 
-                        classes: 'info-box-base info-box-left info-box-small info-box-two-column info-box-variable-width-module',
+                        classes: 'info-box-base info-box-left info-box-tall info-box-variable-width-module',
                         buttons: [{ text: 'Alert', click: function (e) { alert("You've been alerted."); } }], content: 'ticket goes here' },
+                    { template: 'info-box-module-template', title: 'Your Ticket',
+                        classes: 'info-box-base info-box-right info-box-small info-box-two-column info-box-variable-width-module', 
+                        buttons: [{ text: 'Create', click: function (e) { alert("You've created a ticket."); } }], content: 'ticket meta goes here.' },
                     { template: 'info-box-module-template', title: 'News', 
                         classes: 'info-box-base info-box-right info-box-small info-box-two-column info-box-variable-width-module',
                         buttons: [{ text: 'Refresh', click: function (e) { alert("Getting new content."); } }], content: 'news!' } 

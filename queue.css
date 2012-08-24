@@ -23,20 +23,22 @@ div#sidebar {
 /* SIDEBAR */
 
 .sidebar-content {
-	border-top: 1px solid #999;
+	border-right: 1px solid #888;
 	background: #eee;
 	min-height: 100%;
 }
 
 .sidebar-separator {
-	padding-left: 5px;
+	padding: 5px 0 0 5px;
 	width: inherit;
 	height: 24px;
-	background-color: #000;
-	color: #FFF;
+	background-color: #ccc;
+	color: #000;
 	text-align: left;
-	font-size: 16px;
+	font-size: 14px;
 	font-weight: bold;
+	border-top: 1px solid #888;
+	border-bottom: 1px solid #888;
 }
 
 .sidebar-header {
@@ -57,8 +59,9 @@ div#sidebar {
 
 .sidebar-list ul li {
 	display: block;
-	border-top: 1px solid #999;
+	/*border-top: 1px solid #ddd;*/
 	border-bottom: 1px solid #ddd;
+	border-right:  1px solid #ddd;
 }
 
 .sidebar-list ul li:first-child {
@@ -122,6 +125,10 @@ div#sidebar {
 }
 
 div.info-box-base.info-box-variable-width-module {
-	margin: 0;
+	margin: 0 0 10px 0;
 	width: 49%;
+}
+
+.horizontal-list {
+	border-bottom: 1px solid #888;
 }
