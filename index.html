@@ -42,7 +42,15 @@
 </ul>
     
 <div id="page-wrapper">
-    <div id="cards" class="cards" data-bind="foreach: cards">
+    <div data-bind="template: state"></div>
+</div>
+
+<div id = "footer"></div>
+
+<!-- TEMPLATES -->
+
+<script type="text/html" id="courses-template">
+    <div id="cards" class="cards" data-bind="foreach: $root.cardViewModel.cards">
         <div class="card">
             <div class="card-header">
                 <table>
@@ -54,7 +62,7 @@
             </div>
             <div class="card-separator">
                 <span>TUTORS <span data-bind="text: '(' + tutors().length + ')'"></span></span>
-                <span class="card-button"><a data-bind="click: $parent.joinRoom">JOIN</a></span>
+                <span class="card-button"><a data-bind="click: function () { $root.cardViewModel.joinRoom($data); }">JOIN</a></span>
             </div>
             <div class="card-tutors">
                 <ul data-bind="foreach: tutors">
@@ -70,73 +78,95 @@
             <div class="card-part card-footer">Expected Close: 24 hours</div>
         </div>
     </div>
-    
-    <div id="queue" style="display: none"> <!-- data-bind="with: queueViewModel" -->
+</script>
+
+<script type="text/html" id="queue-template">
+    <div id="queue"> 
         <div id="sidebar">
-		    <div class="sidebar-content">
-			    <div class="sidebar-part sidebar-header">
-				    <span class="sidebar-header-icon"></span>
-				    <span class="sidebar-header-name" data-bind="text: name"></span>
-			    </div>
+            <div class="sidebar-content">
+                <div class="sidebar-part sidebar-header">
+                    <span class="sidebar-header-icon"></span>
+                    <span class="sidebar-header-name" data-bind="text: $root.queueViewModel.name"></span>
+                </div>
 
-			    <div class="sidebar-part sidebar-separator">
-				    <span class="title">TUTORS</span>
-			    </div>
+                <div class="sidebar-part sidebar-separator">
+                    <span class="title">TUTORS</span>
+                </div>
 
-			    <div class="sidebar-part sidebar-list sidebar-tutors">
-				    <ul data-bind="foreach: tutors">
-					    <li><span></span><span data-bind="text: name"></span></li>
-				    </ul>
-			    </div>
+                <div class="sidebar-part sidebar-list sidebar-tutors">
+                    <ul data-bind="foreach: $root.queueViewModel.tutors">
+                        <li><span></span><span data-bind="text: name"></span></li>
+                    </ul>
+                </div>
 
-			    <div class="sidebar-part sidebar-separator">
-				    <span class="title">QUEUE</span>
-			    </div>
+                <div class="sidebar-part sidebar-separator">
+                    <span class="title">QUEUE</span>
+                </div>
 
-			    <div class="sidebar-list sidebar-queue">
-				    <ul data-bind="foreach: messages">
-					    <li data-bind="click: $parent.selectMessage">
-						    <span class="sidebar-queue-item title" data-bind="text: student().name"></span>
-						    <span class="sidebar-queue-item info" data-bind="text: description"></span>
-					    </li>
-				    </ul>	
-			    </div>
+                <div class="sidebar-list sidebar-queue">
+                    <ul data-bind="foreach: $root.queueViewModel.messages">
+                        <li data-bind="click: $root.queueViewModel.selectMessage">
+                            <span class="sidebar-queue-item title" data-bind="text: student().name"></span>
+                            <span class="sidebar-queue-item info" data-bind="text: description"></span>
+                        </li>
+                    </ul>   
+                </div>
 
-		    </div>
-	    </div>
+            </div>
+        </div>
 
-	    <div id="main-content">
-		    <div class="section">
-			    <div class="section-header">
-				    <button class="hide-button">Hide</button>
-				    <span class="section-header-title">Statistics</span>
-			    </div>
+        <div id="main-content">
+            <div class="queue-modules" data-bind="foreach: $root.queueViewModel.modules">
+                <div data-bind="template: template"></div>
+            </div>
 
-			    <div id="chart-container" style="min-width: 200px; height: 200px; margin: 0 auto"></div>
-		    </div>
+            <!-- 
+            <div class="section">
+                <div class="section-header">
+                    <button class="hide-button">Hide</button>
+                    <span class="section-header-title">Statistics</span>
+                </div>
 
-		    <div class="section" data-bind="with: selectedMessage">
-			    <div class="section-header">
-				    <button class="hide-button">Hide</button>
-				    <span class="section-header-title">Current Ticket</span>
-			    </div>
-			    <div class="section-info">
-				    <p data-bind="text: student().name"></p>
-				    <p><!-- we should data bind some meta data here --></p> 
-			    </div>
-			    <div class="section-content">
-				    <p data-bind="text: description"></p>
-			    </div>
-			    <div class="section-actions">
-				    <button>Accept</button>
-				    <button>Defer</button>
-			    </div>
-		    </div>
-	    </div> 
+                <div id="chart-container" style="min-width: 200px; height: 200px; margin: 0 auto"></div>
+            </div>
+
+            <div class="section" data-bind="with: $root.queueViewModel.selectedMessage">
+                <div class="section-header">
+                    <button class="hide-button">Hide</button>
+                    <span class="section-header-title">Current Ticket</span>
+                </div>
+                <div class="section-info">
+                    <p data-bind="text: student().name"></p>
+                    <p></p> 
+                </div>
+                <div class="section-content">
+                    <p data-bind="text: description"></p>
+                </div>
+                <div class="section-actions">
+                    <button>Accept</button>
+                    <button>Defer</button>
+                </div>
+            </div>
+            -->
+        </div> 
     </div>
-</div>
+</script>
 
-<div id = "footer"></div>
+<script type="text/html" id="info-box-module-template">
+    <div data-bind="attr: { class: classes }">
+        <div class="info-box-header">
+            <span class="info-box-title" data-bind="text: title"></span>
+            <span class="info-box-buttons" data-bind="foreach: buttons">
+                <span class="button" data-bind="{ click: click, text: text }"></span>
+            </span>        
+        </div>
+        <div class="info-box-content-outer">
+            <div class="info-box-content-inner" data-bind="html: content"></div>
+        </div>
+    </div>
+</script>
+
+<!-- SCRIPT -->
 
 <script>
 
@@ -274,26 +304,27 @@
             var self  = this,
                 savedCards = null;
 
-            self.cards = ko.observableArray();  
+            self.cards = ko.observableArray([
+                new CardModel('CSE 80', [new TutorModel('Herp Derpington', 'Busy')], generateData(), generateData(20)), 
+                new CardModel('CSE 132A', [new TutorModel('Vinay V.', 'Available')], generateData(), generateData(20))
+            ]);  
 
             self.joinRoom = function (card) {                
-                saveCards();
-                self.cards(null);
+/*                saveCards();
+                self.cards(null);*/
 
-                $('#queue').show();
-
-                queueViewModel.resizeSidebar();
-                queueViewModel.bindShowHideButtons();
                 queueViewModel.tutors(card.tutors());
                 queueViewModel.name(card.name());
+
                 queueViewModel.messages([
                     new MessageModel(new StudentModel('Derrick McMillen', 'waiting'), card.tutors()[0], 'I fucked up bad...'),
                     new MessageModel(new StudentModel('Chase Murphy', 'waiting'), card.tutors()[0], 'My linked list is unlinked')
-                ]);
-            }
+                ]); 
+            
+                app.state(app.states.QUEUE);
 
-            function saveCards () {
-                savedCards = self.cards();
+                queueViewModel.resizeSidebar();
+                queueViewModel.bindShowHideButtons();
             }
         };
 
@@ -319,6 +350,15 @@
 
                 self.opened = ko.observable();
                 self.closed = ko.observable();
+
+                self.modules = ko.observableArray([
+                    { template: 'info-box-module-template', title: 'Current Ticket', 
+                        classes: 'info-box-base info-box-left info-box-small info-box-two-column info-box-variable-width-module',
+                        buttons: [{ text: 'Alert', click: function (e) { alert("You've been alerted."); } }], content: 'ticket goes here' },
+                    { template: 'info-box-module-template', title: 'News', 
+                        classes: 'info-box-base info-box-right info-box-small info-box-two-column info-box-variable-width-module',
+                        buttons: [{ text: 'Refresh', click: function (e) { alert("Getting new content."); } }], content: 'news!' } 
+                ]);
 
                 /* METHODS */
 
@@ -378,20 +418,20 @@
         var AppViewModel = function () {
             var self = this;
 
+            self.states = {
+                COURSES: 'courses-template',
+                QUEUE: 'queue-template'
+            };
+
+            self.state = ko.observable(self.states.COURSES);
+            self.selectedQueue = ko.observable(null);
+
             self.queueViewModel = new QueueViewModel();
             self.cardViewModel = new CardViewModel(self.queueViewModel);
-            
-            ko.applyBindings(self.cardViewModel, document.getElementById('cards'));
-            ko.applyBindings(self.queueViewModel, document.getElementById('queue')); 
-        
-            self.cardViewModel.cards([
-                new CardModel('CSE 80', [new TutorModel('Herp Derpington', 'Busy')], generateData(), generateData(20)), 
-                new CardModel('CSE 132A', [new TutorModel('Vinay V.', 'Available')], generateData(), generateData(20))
-            ]);
-
         };
 
         var app = new AppViewModel();
+        ko.applyBindings(app);
     });
 
 </script>

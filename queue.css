@@ -120,3 +120,8 @@ div#sidebar {
 	font-size: 11px;
 	color: #444;
 }
+
+div.info-box-base.info-box-variable-width-module {
+	margin: 0;
+	width: 49%;
+}
