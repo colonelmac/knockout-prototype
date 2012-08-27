@@ -13,14 +13,11 @@
     <link rel="shortcut icon" type="image/png" href="/public/images/favicon.ico" />
     <link rel="stylesheet" type="text/css" href="style.css" />
     <link rel="stylesheet" type="text/css" href="queue.css" />
-    <link rel="stylesheet" type="text/css" href="jquery.jqplot.min.css" />
     
     <script type="text/javascript" language="javascript"  src="/public/javascripts/jquery-1.7.1.min.js"></script>
     <script type="text/javascript" language="javascript"  src="/public/javascripts/knockout-2.1.0.js"></script>
     <script type="text/javascript" language="javascript"  src="/public/javascripts/sammy/sammy-0.7.1.min.js"></script>
-    <script type="text/javascript" language="javascript"  src="/public/javascripts/jquery.jqplot.min.js"></script>
-    <script type="text/javascript" language="javascript"  src="/public/javascripts/jqplot.dateAxisRenderer.min.js"></script>
-    <script type="text/javascript" language="javascript"  src="/public/javascripts/jqplot.highlighter.min.js"></script>
+    <script type="text/javascript" language="javascript"  src="/public/javascripts/highcharts.js"></script>
 </head>
 <body>
 
@@ -53,20 +50,16 @@
     <div id="cards" class="cards" data-bind="foreach: $root.cardViewModel.cards">
         <div class="card">
             <div class="card-header">
-                <table>
-                    <tr>
-                        <td><span class="card-header-icon"></span></td>
-                        <td class='card-header-name'><h3><a href="#" data-bind="text: name"></a></h3></td>
-                    </tr>
-                </table>
+                <span class="card-header-icon"></span>
+                <h3 class="card-header-name"><a href="#" data-bind="text: name"></a></h3>
             </div>
             <div class="card-separator">
                 <span>TUTORS <span data-bind="text: '(' + tutors().length + ')'"></span></span>
-                <span class="card-button"><a data-bind="click: function () { $root.cardViewModel.joinRoom($data); }">JOIN</a></span>
             </div>
             <div class="card-tutors">
                 <ul data-bind="foreach: tutors">
-                    <li><span></span><span data-bind="text: name"></span></li>
+                    <li><span class="card-status"></span><span data-bind="text: name"></span>
+                    <span class="card-right"><span data-bind="text: hours"></span> hours</span></li>
                 </ul>
             </div>
             <div class="card-separator">
@@ -75,7 +68,10 @@
                 </div>
             </div>
             <div class="card-part card-graph card-body" data-bind="graph: true"></div>
-            <div class="card-part card-footer">Expected Close: 24 hours</div>
+            <div class="card-part card-footer">
+                <span class="card-button"><a data-bind="click: function () { $root.cardViewModel.joinRoom($data); }">ENTER</a></span>
+                <span class="card-close">Expected Close: 24 hours</span>
+            </div>
         </div>
     </div>
 </script>
@@ -213,43 +209,50 @@
             self.close       = function (expected) { };
 
             self.graph       = function (element) {
-                $(element).attr("id", "card-graph-current");
-                var plottable = self.isClosed() ? [self.stats.average()] : [self.stats.average(), self.stats.today()],
+                var series    = [{ name: "Average", data: self.stats.average() }],
                     size      = self.size(),
                     wait      = self.wait(),
-                    graph     = $.jqplot("card-graph-current", plottable, {
-                        seriesDefaults: { fill: true, fillAlpha: '0.7' },
-                        series: [
-                            {label: "Average (Size: " + size.average + "/Wait: " + wait.average + " minutes)" }, 
-                            {label: "Today (Size: " + size.today + "/Wait: " + wait.today + " minutes)" }
-                        ],
-                        grid: {
-                            drawGridlines: false,
-                        },
-                        legend: { 
-                            show: true,
-                            placement: "outsideGrid",
-                            location: "s",
-                            marginRight: 0,
-                            marginLeft: 0,
-                        },
-                        axes: {
-                            xaxis: {
-                                renderer:$.jqplot.DateAxisRenderer,
-                                tickOptions: {formatString: "%#I %p"},
-                                min: self.stats.average()[0][0],
-                                max: self.stats.average()[self.stats.average().length-1][0],
-                                tickInterval: "2 hours",
-                            }, 
-                            yaxis: { min: 0 },
-                        },
-                        highlighter: {
-                            show: true,
-                            sizeAdjust: 7.5,
-                            tooltipAxes: 'y',
+                    today     = new Date(),
+                    graph;
+                today.setHours(8);
+                if (!self.isClosed()) {
+                    series.push({ name: "Today", data: self.stats.today() });
+                }
+                Highcharts.setOptions({ global: { useUTC: false } });
+                graph = new Highcharts.Chart({
+                    chart: {
+                        renderTo: element,
+                        type: "area",
+                        height: 300,
+                        spacingBottom: 0,
+                        spacingLeft: 0,
+                        spacingTop: 0,
+                        backgroundColor: "#ebf2d3",
+                    },
+                    tooltip: {
+                        xDateFormat: "%l %P",
+                        shared: true
+                    },
+                    series: series,
+                    title: { text: "Size" },
+                    xAxis: {
+                        title: { text: "Hour" },
+                        type: "datetime",
+                        tickInterval: 1000 * 3600 * 2,
+                        dateTimeLabelFormats: {
+                            hour: "%l %P"
                         }
+
+                    },
+                    yAxis: { title: { text: "Number of people" } },
+                    plotOptions: {
+                        area: {
+                            pointInterval: 1000 * 3600 * 2,
+                            pointStart: today.getTime()
+                        }
+                    },
+                    credits: { enabled: false }
                 });
-                $(element).removeAttr("id");
                 return true;
             };
         };
@@ -258,11 +261,12 @@
          * TutorModel - used to model the data represented on a tutor status
          */
 
-        var TutorModel = function (n, s) {
+        var TutorModel = function (n, s, h) {
             var self = this;
 
             self.name   = n;
             self.status = ko.observable(s); 
+            self.hours  = ko.observable(h);
         };
 
         /*
@@ -305,8 +309,8 @@
                 savedCards = null;
 
             self.cards = ko.observableArray([
-                new CardModel('CSE 80', [new TutorModel('Herp Derpington', 'Busy')], generateData(), generateData(20)), 
-                new CardModel('CSE 132A', [new TutorModel('Vinay V.', 'Available')], generateData(), generateData(20))
+                new CardModel('CSE 80', [new TutorModel('Herp Derpington', 'Busy', 2)], generateData(), generateData(20)), 
+                new CardModel('CSE 132A', [new TutorModel('Vinay V.', 'Available', 3)], generateData(), generateData(20))
             ]);  
 
             self.joinRoom = function (card) {                
@@ -427,7 +431,7 @@
             var output = [],
                 i;
             for (i=8; i<=max; i+=2){
-                output.push([i + ":00", Math.floor(Math.random()*30)]);
+                output.push(Math.floor(Math.random()*30));
             }
             return output;
         }

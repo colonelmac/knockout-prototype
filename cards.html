@@ -1,52 +1,360 @@
-<!DOCTYPE html>
-<html>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
 <head>
-	<title>Queue</title>
+<meta http-equiv="Content-type" content="text/html;charset=UTF-8" />
+<title>Queue - Autograder</title>
+<link rel="stylesheet" type="text/css" href="data/css/jquery.jqplot.min.css" />
+<link rel="stylesheet" type="text/css" href="data/css/hot-sneaks/jquery-ui-1.8.16.custom.css" />
+<style type="text/css">
+* { margin: 0; padding: 0 }
+.card { display: block; margin: 1em; float: left; width: 300px; height: 500px; border: 3px solid black; margin: 20px;}
+.title { background-color: black; color: white; padding: 0.5em; 1em; font-weight: bold;}
+.content { width: 100%; text-align: center; }
+.overlay { height: 500px; width: 300px; position: absolute; z-index: 10; background-color: #000; display: none; color: #eee; cursor: pointer; }
+.overlay table { vertical-align: center; width: 100%; height: 100%; text-align: center; font-size: 150%; font-weight: bold;}
+.overlay2 { height: 100px; width: 300px; position: absolute; top: 200px; z-index: 10; background-color: #000; display: none; color: #eee; cursor: pointer; }
+.overlay2 table { vertical-align: center; width: 100%; height: 100%; text-align: center; font-size: 150%; font-weight: bold;}
+li { list-style-type: none; }
+li a { font-weight: bold; }
+li img { vertical-align: middle; margin: 0 0.2em;}
+div.graph { height: 200px; padding-right: 0.3em; }
+#plot2 { height: 150px; }
+.scroller { max-height: 100px; overflow: auto; }
+.stats table { width: 100%; }
+.timeleft { float: right; padding: 0 0.3em; }
 
-	<link type="text/css" rel="stylesheet" href="style.css" />
+.plot6 { position: relative; }
+.plot6 { border: 3px solid #090742;}
+.plot6 .header { background-color: #020742; }
+.plot6 .header a { color: #EEE; }
+.plot6 .title { background-color: #3862C6; color: #eee;}
+.plot6 .tutors .scroller ul li a {color: #020742; }
+.plot6 .graph, .plot7 .graph { height: 250px; }
+.plot6 .tutorjoin { display: block; float: right; margin-right: 0.3em; border: 1px solid #EEE; padding: 0 0.4em; }
+.plot6 .tutorhover { background-color: #eee; color: #3862C6; cursor: pointer;}
 
+.plot7 { border: 3px solid #92b533; background-color: #ebf2d3; color: #663605}
+.plot7 .header { background-color: #92b533; }
+.plot7 .header a { color: #FFF; }
+.plot7 .title { background-color: #c8dd88; color: #663605;}
+.plot7 { position: relative; }
+.plot7 .tutorjoin { display: block; float: right; margin-right: 0.3em; border: 1px solid #663605; padding: 0 0.4em; }
+.plot7 .tutorhover { background-color: #663605; color: #c8dd88; cursor: pointer;}
+
+.plot8 ul.ignore { margin: 0.4em; }
+
+td.size-current, td.size-average, td.wait-current, td.wait-average { font-weight: bold; }
+</style>
+<script type="text/javascript" src="data/js/jquery-1.6.2.min.js"></script>
+<script type="text/javascript" src="data/js/jquery.jqplot.min.js"></script>
+<script type="text/javascript" src="data/js/jqplot.dateAxisRenderer.min.js"></script>
+<script type="text/javascript" src="data/js/jqplot.highlighter.min.js"></script>
+<script type="text/javascript">
+$(document).ready(function(){
+    $("div.card").each(function(){
+        var id = $("div div.graph", this).attr("id");
+        if (id) {
+            plot(id);
+        }
+    });
+
+    $("ul").not(".ignore").each(function(){
+        var tutors = $("li", this).length;
+        $(this).prev("div.title").add($(this).parent().prev("div.title")).append(" (" + tutors + ")");
+    });
+
+    $("span.tutorjoin").hover(function(e){
+        $(this).toggleClass("tutorhover");
+    });
+
+    $("div.card.plot6, div.card.plot7").hover(function(){
+        $("div.overlay, div.overlay2", this).css("opacity", "0.8").fadeToggle();
+    });
+
+    $("div.footer").css({position: "absolute",
+                         bottom: 0,
+                         width: $("div.footer").width(),
+                         });
+
+
+});
+var data = function(max){
+    max = max || new Date().getHours();
+    var output = [],
+        i;
+    for (i=8; i<=max; i+=2){
+        output.push([i + ":00", Math.floor(Math.random()*30)]);
+    }
+    return output;
+}
+
+
+var plot = function(element) {
+    var isPlot6 = element == "plot6" || element == "plot7" || element == "plot8";
+    var closed = $("#" + element).hasClass("closed");
+    var current = data();
+    var average = data(20);
+    var plottable = closed ? [average] : [average, current];
+    var now = current.length-1;
+    var card = $("div." + element);
+    if (!closed){
+        $("td.size-current", card).text(current[now][1]);
+        $("td.wait-current", card).text(current[now][1] + " minutes");
+    }
+    $("td.size-average", card).text(average[now][1]);
+    $("td.wait-average", card).text(average[now][1] + " minutes");
+    var graph = $.jqplot(element, plottable, {
+        seriesDefaults: { fill: true, fillAlpha: '0.7' },
+        series: [
+            {label: isPlot6 ? "Average (Size: " + average[now][1] + "/Wait: " + average[now][1] + " minutes)" : "Average"}, 
+            {label: isPlot6 ? "Today (Size: " + current[now][1] + "/Wait: " + current[now][1] + " minutes)" : "Today"}
+        ],
+        grid: {
+            drawGridlines: !isPlot6,
+        },
+        legend: { 
+            show: true,
+            placement: isPlot6 ? "outsideGrid" : "insideGrid",
+            location: isPlot6 ? 's' : 'ne',
+            marginRight: isPlot6 ? 0 : null,
+            marginLeft: isPlot6 ? 0 : null,
+        },
+        axes: {
+            xaxis: {
+                renderer:$.jqplot.DateAxisRenderer,
+                tickOptions: {formatString: "%#I %p"},
+                min: average[0][0],
+                max: average[average.length - 1][0],
+                tickInterval: "2 hours",
+            }, 
+            yaxis: { min: 0 },
+        },
+        highlighter: {
+            show: true,
+            sizeAdjust: 7.5,
+            tooltipAxes: 'y',
+        },
+    });
+    return graph;
+}
+</script>
 </head>
 <body>
-
-	<div class="cards">
-		<div class="card">
-			<div class="card-part card-header">
-				<span class="card-header-icon"></span>
-				<span class="card-header-name">CSE 86</span>
-			</div>
-			<div class="card-part card-separator">
-				<span class="title">TUTORS</span>
-				<span class="card-button"><a href="wizard.html">JOIN AS GRADER</a></span>
-			</div>
-			<div class="card-part card-tutors">
-				<ul>
-					<li><span></span>Derp Herpington</li>
-					<li><span></span>Herp Derpington</li>
-				</ul>
-			</div>
-			<div class="card-part card-separator">
-				<span>QUEUE STATS</span>
-			</div>
-
-			<div class="card-part card-body">
-				Body
-			</div>
-
-			<div class="card-part card-footer">
-				Expected close at 11:00PM
-			</div>
-		</div>
-	</div>
-
+<div class="card plot1">
+    <div class="header">
+        <table>
+            <tr><td rowspan="2"><img src="/data/greenball.png" /></td><td class='content'><h3><a href="#">CSE 8</a></h3></td></tr>
+            <tr><td class='content'>Expected close: 2 hours</td></tr>
+        </table>
+    </div>
+    <div class="tutors">
+        <div class="title">Tutors</div>
+        <ul>
+            <li><img src="/data/greenball.png" /><a href="#">Herp Derpington</a> ~ 1 hour</li>
+            <li><img src="/data/yellowball.png" /><a href="#">Derp Herpington</a> ~ 2 hours</li>
+        </ul>
+    </div>
+    <div>
+        <div class="title">Stats</div>
+        <div class='graph' id="plot1"></div>
+    </div>
+    <div class="stats">
+        <table>
+               <tr>
+                   <td>Current Size:</td><td class='size-current'></td>
+                   <td>Current Wait:</td><td class='wait-current'></td>
+               </tr>
+               <tr>
+                   <td>Average Size:</td><td class='size-average'></td>
+                   <td>Average Wait:</td><td class='wait-average'></td>
+               </tr>
+       </table>
+    </div>
+</div>
+<div class="card plot2">
+    <div class="header">
+        <table>
+            <tr><td rowspan="2"><img src="/data/greenball.png" /></td><td class='content'><h3><a href="#">CSE 11</a></h3></td></tr>
+            <tr><td class='content'>Expected close: 2 hours</td></tr>
+        </table>
+    </div>
+    <div class="tutors">
+        <div class="title">Tutors</div>
+        <ul>
+            <li><img src="/data/greenball.png" /><a href="#">Herp Derpington</a> ~ 1 hour</li>
+            <li><img src="/data/yellowball.png" /><a href="#">Derp Herpington</a> ~ 2 hours</li>
+        </ul>
+    </div>
+    <div>
+        <div class="title">Stats</div>
+        <div class='graph' id="plot2"></div>
+    </div>
+    <div class="stats">
+        <div class="title">Current</div>
+            <table>
+               <tr><td>Size:</td><td class='size-current'></td><td>Wait:</td><td class='wait-current'></td></tr>
+            </table>
+        <div class="title">Average</div>
+            <table>
+               <tr><td>Size:</td><td class='size-average'></td><td>Wait:</td><td class='wait-average'></td></tr>
+           </table>
+        </div>
+    </div>
+</div>
+<div class="card plot3">
+    <div class="header">
+        <table>
+            <tr><td><img src="/data/greenball.png" /></td><td class='content'><h3><a href="#">CSE 12</a></h3></td></tr>
+        </table>
+    </div>
+    <div class="tutors">
+        <div class="title">Tutors</div>
+        <ul>
+            <li><img src="/data/greenball.png" /><a href="#">Herp Derpington</a> ~ 1 hour</li>
+            <li><img src="/data/yellowball.png" /><a href="#">Derp Herpington</a> ~ 2 hours</li>
+        </ul>
+    </div>
+    <div>
+        <div class="title">Stats</div>
+        <div class='graph' id="plot3"></div>
+    </div>
+    <div class="stats">
+        <table>
+               <tr>
+                   <td>Current Size:</td><td class='size-current'></td>
+                   <td>Current Wait:</td><td class='wait-current'></td>
+               </tr>
+               <tr>
+                   <td>Average Size:</td><td class='size-average'></td>
+                   <td>Average Wait:</td><td class='wait-average'></td>
+               </tr>
+       </table>
+    </div>
+    <div class="title">Expected Close: 2 hours</div>
+</div>
+<div class="card plot4">
+    <div class="header">
+        <table>
+            <tr><td><img src="/data/greenball.png" /></td><td class='content'><h3><a href="#">CSE 15</a></h3></td></tr>
+        </table>
+    </div>
+    <div class="tutors">
+        <div class="title">Tutors</div>
+        <div class="scroller">
+            <ul>
+                <li><img src="/data/greenball.png" /><a href="#">Herp Derpington</a> ~ 1 hour</li>
+                <li><img src="/data/greenball.png" /><a href="#">Lerp Ferpington</a> ~ 24 hours</li>
+                <li><img src="/data/yellowball.png" /><a href="#">Derp Herpington</a> ~ 2 hours</li>
+                <li><img src="/data/yellowball.png" /><a href="#">Werp Kerpington</a> ~ 1 hour</li>
+                <li><img src="/data/redball.png" /><a href="#">Ferp Lerpington</a> ~ 30 minutes</li>
+            </ul>
+        </div>
+    </div>
+    <div>
+        <div class="title">Stats</div>
+        <div class='graph' id="plot4"></div>
+    </div>
+    <div class="stats">
+        <table>
+               <tr>
+                   <td>Current Size:</td><td class='size-current'></td>
+                   <td>Current Wait:</td><td class='wait-current'></td>
+               </tr>
+               <tr>
+                   <td>Average Size:</td><td class='size-average'></td>
+                   <td>Average Wait:</td><td class='wait-average'></td>
+               </tr>
+       </table>
+    </div>
+    <div class="title">Expected Close: 24 hours</div>
+</div>
+<div class="card plot5">
+    <div class="header">
+        <table>
+            <tr><td><img src="/data/redball.png" /></td><td class='content'><h3><a href="#">CSE 20</a></h3></td></tr>
+        </table>
+    </div>
+    <div>
+        <div class="title">Stats</div>
+        <div class='graph closed' id="plot5"></div>
+    </div>
+    <div class="stats">
+        <table>
+               <tr>
+                   <td>Average Size:</td><td class='size-average'></td>
+                   <td>Average Wait:</td><td class='wait-average'></td>
+               </tr>
+       </table>
+    </div>
+    <div class="title">Expected Open: 1 hour</div>
+</div>
+<div class="card plot6">
+    <div class='overlay'><table><tr><td>Join Queue</td></tr></table></div>
+    <div class="header">
+        <table>
+            <tr><td><img src="/data/greenball2.png" /></td><td class='content'><h3><a href="#">CSE 21</a></h3></td></tr>
+        </table>
+    </div>
+    <div class="tutors">
+        <div class="title">Tutors<span class='tutorjoin'>Join as tutor</span></div>
+        <div class="scroller">
+            <ul>
+                <li><img src="/data/greenball2small.png" /><a href="#">Herp Derpington</a> ~ 1 hour</li>
+                <li><img src="/data/greenball2small.png" /><a href="#">Lerp Ferpington</a> ~ 24 hours</li>
+                <li><img src="/data/yellowball2small.png" /><a href="#">Derp Herpington</a> ~ 2 hours</li>
+                <li><img src="/data/yellowball2small.png" /><a href="#">Werp Kerpington</a> ~ 1 hour</li>
+                <li><img src="/data/redball2small.png" /><a href="#">Ferp Lerpington</a> ~ 30 minutes</li>
+            </ul>
+        </div>
+    </div>
+    <div>
+        <div class="title">Stats</div>
+        <div class='graph' id="plot6"></div>
+    </div>
+    <div class="title footer">Expected Close: 24 hours</div>
+</div>
+<div class="card plot7 ui-corner-all">
+    <div class='overlay2'><table><tr><td>Join Queue</td></tr></table></div>
+    <div class="header">
+        <table>
+            <tr><td><img src="/data/greenball2.png" /></td><td class='content'><h3><a href="#">CSE 100</a></h3></td></tr>
+        </table>
+    </div>
+    <div class="tutors">
+        <div class="title">Tutors<span class='tutorjoin'>Join as tutor</span></div>
+        <div class="scroller">
+            <ul>
+                <li><img src="/data/greenball2small.png" /><a href="#">Herp Derpington</a> <span class='timeleft'>1 hour</span></li>
+                <li><img src="/data/greenball2small.png" /><a href="#">Lerp Ferpington</a> <span class='timeleft'>24 hours</span></li>
+                <li><img src="/data/yellowball2small.png" /><a href="#">Derp Herpington</a> <span class='timeleft'>2 hours</span></li>
+                <li><img src="/data/yellowball2small.png" /><a href="#">Werp Kerpington</a> <span class='timeleft'>1 hour</span></li>
+                <li><img src="/data/redball2small.png" /><a href="#">Ferp Lerpington</a> <span class='timeleft'>30 minutes</span></li>
+            </ul>
+        </div>
+    </div>
+    <div>
+        <div class="title">Stats</div>
+        <div class='graph' id="plot7"></div>
+    </div>
+    <div class="title footer">Expected Close: 24 hours</div>
+</div>
+<div class="card plot8 plot6 ui-corner-all">
+    <div class="header">
+        <table>
+            <tr><td><img src="/data/redball2.png" /></td><td class='content'><h3><a href="#">CSE 101</a></h3></td></tr>
+        </table>
+    </div>
+    <div>
+        <div class="title">Stats</div>
+        <div class='graph closed' id="plot8"></div>
+    </div>
+    <div class='title'>Need More Help?</div>
+    <ul class='ignore'>
+        <li><a href="#">Email the TAs</a></li>
+        <li><a href="#">Email the Professor</a></li>
+        <li><a href="#">Post on the forum</a></li>
+    </ul>
+    <div class="title footer">Expected Open: 5 hours</div>
+</div>
 </body>
 </html>
-
-<!--
-
-	<span class="info-token">
-		<span class="info-token-msg">
-			<p>This is an information token. Hover over me to learn &amp; get explanations!</p>
-		</span>
-	</span
-
--->
