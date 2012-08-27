@@ -140,8 +140,15 @@ html, body {
 	display: inline-block;
 	height: 11px;
 	width: 11px;
-	background-image: url('available-small.png');
 	margin-right: 5px;
+}
+
+.card-status-available {
+	background-image: url('available-small.png');
+}
+
+.card-status-busy {
+    background-image: url('busy-small.png');
 }
 
 .card-right {

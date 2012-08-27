@@ -58,7 +58,8 @@
             </div>
             <div class="card-tutors">
                 <ul data-bind="foreach: tutors">
-                    <li><span class="card-status"></span><span data-bind="text: name"></span>
+                    <li><span class="card-status" data-bind="css: { 'card-status-busy': status() === 'Busy', 'card-status-available': status() === 'Available' }">
+                    </span><span data-bind="text: name"></span>
                     <span class="card-right"><span data-bind="text: hours"></span> hours</span></li>
                 </ul>
             </div>
