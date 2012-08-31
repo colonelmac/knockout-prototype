@@ -38,37 +38,43 @@ html, body {
 .card {
 	width: 300px;
 	height: 500px;
-	border: 3px solid #92b533;
+	border: 3px solid #9ABA00;
     background-color: #ebf2d3;
-    color: #663605;
     float: left;
     margin: 20px 0 10px 20px;
+    color: #663605;
 }
 
-.card .card-header table {
-    background-color: #92b533;
+.card .card-header {
+    background-color: #9ABA00;
     display: block;
     width: 100%;
-}
-
-.card .card-header-name {
-    text-align: center;
-    vertical-align: middle;
-    width: 100%;
-	color: #663605;
+    text-shadow: #222 1px 1px 1px;
+    font-weight: bold;
+    overflow: auto;
+    padding-bottom: 0.3em;
 }
 
 .card .card-graph {
-    margin: 0.5em;
+    margin: 5px;
+}
+
+.card .card-header a {
+    color: white;
+    text-decoration: none;
 }
 
 .card .card-footer {
-	width: inherit;
 	height: 20px;
 	border-top: 1px solid #92b533;
 	font-weight: bold;
-	font-style: italic;
     font-size: 13px;
+    padding: 0.5em;
+}
+
+.card .card-close {
+	width: inherit;
+	font-style: italic;
 }
 
 .card .card-separator {
@@ -78,10 +84,6 @@ html, body {
     padding: 0.5em;
 	font-size: 13px;
 	font-weight: bold;
-}
-
-.card .card-separator span {
-	padding-left: 5px;
 }
 
 .card-header-icon {
@@ -107,21 +109,20 @@ html, body {
     text-align: left;
 }
 
-.card .card-separator .card-button {
+.card .card-footer .card-button {
 	float: right;
 	margin: 1px 0 0 0;
 	padding: 0;
 	border: 1px solid #663605;
-	font-size: 10px;
 }
 
-.card .card-separator .card-button a {
+.card .card-footer .card-button a {
 	color: #663605;
 	text-decoration: none;
 	padding: 0 4px;
 }
 
-.card .card-separator .card-button a:hover {
+.card .card-footer .card-button a:hover {
 	color: #c8dd88;
 	background-color: #663605;
 	cursor: pointer;
@@ -135,10 +136,21 @@ html, body {
 	margin-left: 5px;
 }
 
-.card-tutors ul li span:first-child {
+.card-status {
 	display: inline-block;
 	height: 11px;
 	width: 11px;
-	background-image: url('available-small.png');
 	margin-right: 5px;
+}
+
+.card-status-available {
+	background-image: url('available-small.png');
+}
+
+.card-status-busy {
+    background-image: url('busy-small.png');
+}
+
+.card-right {
+    float: right;
 }
