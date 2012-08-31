@@ -32,7 +32,7 @@ div#sidebar {
 	padding: 5px 0 0 5px;
 	width: inherit;
 	height: 24px;
-	background-color: #ccc;
+	background-color: #C8DD88; /*#ccc;*/
 	color: #000;
 	text-align: left;
 	font-size: 14px;
@@ -42,7 +42,8 @@ div#sidebar {
 }
 
 .sidebar-header {
-	text-align: center;
+	text-align: left;
+	padding-left: 5px	;
 }
 
 .sidebar-header-icon {
@@ -84,8 +85,9 @@ div#sidebar {
 	font-size: 16px;
 }
 
-.sidebar-tutors ul li {
-	padding-left: 5px;
+.sidebar-tutors ul li, .sidebar-now-serving ul li {
+	padding: 2px 0 2px 5px;
+	font-size: 13px;
 }
 
 .sidebar-tutors ul li span:first-child {
@@ -131,4 +133,37 @@ div.info-box-base.info-box-variable-width-module {
 
 .horizontal-list {
 	border-bottom: 1px solid #888;
+}
+
+/* MISCELLANEOUS */
+
+#back-to-courses {
+	padding: 5px;
+	position: absolute;
+	bottom: 2px;
+	padding: 5px;
+
+	background: #ddd;
+	border: 1px solid #888;
+    
+    font-size: 14px;
+
+    cursor: pointer;
+}
+
+#back-to-courses a {
+	color: #222;
+	text-decoration: none;
+}
+
+/* CURRENT TICKET */
+
+.current-ticket-content ul {
+	list-style: none;
+}
+
+.current-ticket-label {
+	font-size: 12px;
+	font-weight: bold;
+	letter-spacing: 1px;
 }
