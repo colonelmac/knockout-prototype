@@ -45,6 +45,10 @@ html, body {
     color: #663605;
 }
 
+.card-title-part {
+    margin: 0 10px 0 0;
+}
+
 .card .card-header {
     background-color: #9ABA00;
     display: block;
@@ -53,15 +57,21 @@ html, body {
     font-weight: bold;
     overflow: auto;
     padding-bottom: 0.3em;
+    cursor: pointer;
+    color: white;
+}
+
+.card .card-header:hover {
+    text-decoration: underline;
 }
 
 .card .card-graph {
     margin: 5px;
 }
 
-.card .card-header a {
-    color: white;
-    text-decoration: none;
+.card-graph-type {
+    cursor: pointer;
+    text-decoration: underline;
 }
 
 .card .card-footer {
@@ -86,7 +96,7 @@ html, body {
 	font-weight: bold;
 }
 
-.card-header-icon {
+.card-header-status {
 	display: inline-block;
 	height: 32px;
 	width: 33px;
@@ -95,11 +105,21 @@ html, body {
     float: left;
 }
 
+.card-header-enter {
+    display: inline-block;
+    height: 32px;
+    width: 33px;
+    margin: 10px 5px 0 0;
+    background-image: url('enter.png');
+    float: right;
+}
+
 .card-header-name {
 	font-size: 28px;
 	font-weight: bold;
-    margin: 7px 0 0 5px;
-    float: left;	
+    margin: 7px 0 0 0;
+    cursor: pointer;
+    text-align: center;
 }
 
 .card-tutors {
