@@ -26,17 +26,19 @@
         <div id="logo"><a href="/"><span></span></a></div>
         <div id="autograder"><a href="/"><strong>auto</strong>grader</div></a>
         <div id="status">
-            <a href="/mobile/feedback" id="feedback"><span></span>Feedback</a>
-            <a href="/admin" id="manage"><span></span>Manage</a>
-            <a href="/settings/instructor" id="settings"><span></span>Settings</a>
-            <a href="/logout" id="logout"><span></span>Logout</a>
+            <a href="#" id="feedback"><span></span>Feedback</a>
+            <a href="#" id="checkoff"><span></span>Checkoff</a>
+            <a href="#" id="queue"><span></span>Queue</a>
+            <a href="#" id="manage"><span></span>Manage</a>
+            <a href="#" id="settings"><span></span>Settings</a>
+            <a href="#" id="logout"><span></span>Logout</a>
         </div>
     </div>
 </div>
     
-<ul class="horizontal-list">
+<!-- <ul class="horizontal-list">
     <li><a href="/">Courses</a></li>
-</ul>
+</ul> -->
     
 <div id="page-wrapper">
     <div data-bind="template: state"></div>
@@ -84,6 +86,7 @@
                 <div class="sidebar-part sidebar-header">
                     <span class="sidebar-header-icon"></span>
                     <span class="sidebar-header-name" data-bind="text: $root.queueViewModel.name"></span>
+                    <br class="breaker" />
                 </div>
 
                 <div class="sidebar-part sidebar-separator">
@@ -97,14 +100,24 @@
                 </div>
 
                 <div class="sidebar-part sidebar-separator">
+                    <span class="title">NOW SERVING</span>
+                </div>
+
+                <div class="sidebar-part sidebar-list sidebar-now-serving">
+                    <ul data-bind="foreach: $root.queueViewModel.tutors">
+                        <li><span></span><span data-bind="text: name"></span></li>
+                    </ul>
+                </div>
+
+                <div class="sidebar-part sidebar-separator">
                     <span class="title">QUEUE</span>
                 </div>
 
                 <div class="sidebar-list sidebar-queue">
-                    <ul data-bind="foreach: $root.queueViewModel.messages">
-                        <li data-bind="click: $root.queueViewModel.selectMessage">
-                            <span class="sidebar-queue-item title" data-bind="text: student().name"></span>
-                            <span class="sidebar-queue-item info" data-bind="text: description"></span>
+                    <ul data-bind="foreach: $root.queueViewModel.tickets">
+                        <li data-bind="click: $root.queueViewModel.selectTicket">
+                            <span class="sidebar-queue-item title" data-bind="text: student().firstName + ' ' + student().lastName"></span>
+                            <!-- <span class="sidebar-queue-item info" data-bind="text: description"></span> -->
                         </li>
                     </ul>   
                 </div>
@@ -112,39 +125,21 @@
             </div>
         </div>
 
+        <div id="ticket-drawer">
+            <div class="ticket-drawer-content">
+                <div>this is the ticker drawer.</div>
+                <div>the ticket drawer will slide out when a ticket is clicked on the left</div>
+            </div>
+        </div>
+ 
         <div id="main-content">
-            <div class="queue-modules" data-bind="foreach: $root.queueViewModel.modules">
+            <div id="back-to-courses">
+                <a href="/"><span>&laquo; Back to Courses</span></a>
+            </div>
+
+            <div style="width: 55%; float: right;" class="queue-modules" data-bind="foreach: $root.queueViewModel.modules">
                 <div data-bind="template: template"></div>
             </div>
-
-            <!-- 
-            <div class="section">
-                <div class="section-header">
-                    <button class="hide-button">Hide</button>
-                    <span class="section-header-title">Statistics</span>
-                </div>
-
-                <div id="chart-container" style="min-width: 200px; height: 200px; margin: 0 auto"></div>
-            </div>
-
-            <div class="section" data-bind="with: $root.queueViewModel.selectedMessage">
-                <div class="section-header">
-                    <button class="hide-button">Hide</button>
-                    <span class="section-header-title">Current Ticket</span>
-                </div>
-                <div class="section-info">
-                    <p data-bind="text: student().name"></p>
-                    <p></p> 
-                </div>
-                <div class="section-content">
-                    <p data-bind="text: description"></p>
-                </div>
-                <div class="section-actions">
-                    <button>Accept</button>
-                    <button>Defer</button>
-                </div>
-            </div>
-            -->
         </div> 
     </div>
 </script>
@@ -158,8 +153,34 @@
             </span>        
         </div>
         <div class="info-box-content-outer">
-            <div class="info-box-content-inner" data-bind="html: content"></div>
+            <div class="info-box-content-inner">
+                <div data-bind="template: content_template"></div>
+            </div>
         </div>
+    </div>
+</script>
+
+<script type="text/html" id="tutor-ticket-module-template">
+    <div class="tutor-ticket-content" >
+        
+    </div>
+</script>
+
+<script type="text/html" id="student-ticket-module-template">
+    <div class="student-ticket-content" >
+        
+    </div>
+</script>
+
+<script type="text/html" id="ticket-explorer-module-template">
+    <div class="ticket-explorer-content" >
+        
+    </div>
+</script>
+
+<script type="text/html" id="news-module-template">
+    <div class="news-content" >
+        
     </div>
 </script>
 
@@ -274,25 +295,27 @@
          * StudentModel
          */
        
-        var StudentModel = function (n, s) {
+        var StudentModel = function (firstName, lastName, s) {
             var self = this; 
             
-            self.name = n;
+            self.firstName = firstName;
+            self.lastName = lastName;
             self.status = ko.observable(s);    
         };
 
         /*
-         * MessageModel
-         *
-         * 
+         * TicketModel
          */
 
-        var MessageModel = function(s, t, d) {
-            var self = this
+        var TicketModel = function (student, tutor, title, description) { 
+            var self = this;
 
-            self.student = ko.observable(s);
-            self.tutor = ko.observable(t);
-            self.description = d;
+            self.student = ko.observable(student);
+            self.tutor = ko.observable(tutor);
+
+            self.title = title;
+            self.description = description;
+
             self.submited = new Date();
             self.answered = ko.observable();
         };
@@ -321,23 +344,15 @@
                 queueViewModel.tutors(card.tutors());
                 queueViewModel.name(card.name());
 
-                queueViewModel.messages([
-                    new MessageModel(new StudentModel('Derrick McMillen', 'waiting'), card.tutors()[0], 'Lost... no more hope'),
-                    new MessageModel(new StudentModel('Chase Murphy', 'waiting'), card.tutors()[0], 'My linked list is unlinked'),
-                    new MessageModel(new StudentModel('Anthony Mao', 'waiting'), card.tutors()[0], 'THE MAO EXPERIENCE ENQUEUED!'),
-                    new MessageModel(new StudentModel('Ian Foster', 'waiting'), card.tutors()[0], 'I have not slept since 2010'),
-                    new MessageModel(new StudentModel('Vinay Ventakesh', 'waiting'), card.tutors()[0], 'Herp derp'),
-                    new MessageModel(new StudentModel('Alan A', 'waiting'), card.tutors()[0], 'Herp derp'),
-                    new MessageModel(new StudentModel('Joel Jauregui', 'waiting'), card.tutors()[0], 'Herp derp'),
-                    new MessageModel(new StudentModel('Calvin Harris', 'waiting'), card.tutors()[0], 'I feel so close to you right now...'),
-                    new MessageModel(new StudentModel('Ambuj Punn', 'waiting'), card.tutors()[0], 'Herp derp'),
-                    new MessageModel(new StudentModel('Alan A', 'waiting'), card.tutors()[0], 'Herp derp'),
-                    new MessageModel(new StudentModel('Alan A', 'waiting'), card.tutors()[0], 'Herp derp'),
-                    new MessageModel(new StudentModel('Alan A', 'waiting'), card.tutors()[0], 'Herp derp'),
-                    new MessageModel(new StudentModel('Alan A', 'waiting'), card.tutors()[0], 'Herp derp'),
-                    new MessageModel(new StudentModel('Alan A', 'waiting'), card.tutors()[0], 'Herp derp'),
-                    new MessageModel(new StudentModel('Alan A', 'waiting'), card.tutors()[0], 'Herp derp'),
-                    new MessageModel(new StudentModel('Alan A', 'waiting'), card.tutors()[0], 'Herp derp')
+                queueViewModel.tickets([
+                    new TicketModel(new StudentModel('Derrick','McMillen', 'waiting'), card.tutors()[0], 'Lost... no more hope', lorem),
+                    new TicketModel(new StudentModel('Chase', 'Murphy', 'waiting'), card.tutors()[0], 'My linked list is unlinked', lorem),
+                    new TicketModel(new StudentModel('Anthony', 'Mao', 'waiting'), card.tutors()[0], 'THE MAO EXPERIENCE ENQUEUED!', lorem),
+                    new TicketModel(new StudentModel('Ian', 'Foster', 'waiting'), card.tutors()[0], 'I have not slept since 2010', lorem),
+                    new TicketModel(new StudentModel('Vinay', 'Ventakesh', 'waiting'), card.tutors()[0], 'Herp derp', lorem),
+                    new TicketModel(new StudentModel('Joel', 'Jauregui', 'waiting'), card.tutors()[0], 'Herp derp', lorem),
+                    new TicketModel(new StudentModel('Calvin', 'Harris', 'waiting'), card.tutors()[0], 'I feel so close to you right now...', lorem),
+                    new TicketModel(new StudentModel('Ambuj', 'Punn', 'waiting'), card.tutors()[0], 'Pure thug.', lorem)
                 ]); 
             
                 app.state(app.states.QUEUE);
@@ -347,6 +362,12 @@
             }
         };
 
+        var TicketViewModel = function () {
+            var self = this;
+
+            self.currentTicket = ko.observable(null);
+        };
+
         /*
          * Queue View Model
          * 
@@ -354,8 +375,7 @@
          */
 
         var QueueViewModel = function() {
-            var self = this,
-                savedMessages = null;
+            var self = this;
 
                 /* FIELDS */
 
@@ -364,36 +384,54 @@
                 self.tutors = ko.observableArray();
                 self.selectedTutor = ko.observable();
 
-                self.messages = ko.observableArray([]);
-                self.selectedMessage = ko.observable();
+                self.tickets = ko.observableArray([]);
+                self.selectedTicket = ko.observable();
+
+                self.selectedTicket.subscribe(function (ticket) {
+                    if (ticket) {
+                        self.ticketViewModel.currentTicket(ticket);
+                    }
+                });
+
 
                 self.opened = ko.observable();
                 self.closed = ko.observable();
 
                 self.modules = ko.observableArray([
-                    { template: 'info-box-module-template', title: 'Current Ticket', 
-                        classes: 'info-box-base info-box-left info-box-tall info-box-variable-width-module',
-                        buttons: [{ text: 'Alert', click: function (e) { alert("You've been alerted."); } }], content: 'ticket goes here' },
-                    { template: 'info-box-module-template', title: 'Your Ticket',
-                        classes: 'info-box-base info-box-right info-box-small info-box-two-column info-box-variable-width-module', 
-                        buttons: [{ text: 'Create', click: function (e) { alert("You've created a ticket."); } }], content: 'ticket meta goes here.' },
-                    { template: 'info-box-module-template', title: 'News', 
-                        classes: 'info-box-base info-box-right info-box-small info-box-two-column info-box-variable-width-module',
-                        buttons: [{ text: 'Refresh', click: function (e) { alert("Getting new content."); } }], content: 'news!' } 
+                    { template: 'info-box-module-template', content_template: 'tutor-ticket-module-template',
+                        title: 'Current Ticket', classes: 'info-box-base info-box-right info-box-module',
+                        buttons: [{ text: 'Accept', click: function (e) { alert("You've been accepted."); } },
+                                  { text: 'Derp', click: function (e) { alert("You've been derped."); } }] },
+
+                    { template: 'info-box-module-template', title: 'Your Ticket(s)', content_template: 'student-ticket-module-template',
+                        classes: 'info-box-base info-box-right info-box-module', 
+                        buttons: [{ text: 'Create', click: function (e) { alert("You've created a ticket."); } }] },
+
+                    { template: 'info-box-module-template', content_template: 'ticket-explorer-module-template',
+                        title: 'Ticket Explorer', classes: 'info-box-base info-box-right info-box-module', 
+                        buttons: [{ text: 'Accept', click: function (e) { alert("You've been accepted."); } },
+                                  { text: 'Derp', click: function (e) { alert("You've been derped."); } }] },
+
+                    { template: 'info-box-module-template', title: 'News', content_template: 'news-module-template',
+                        classes: 'info-box-base info-box-right info-box-module',
+                        buttons: [{ text: 'Refresh', click: function (e) { alert("Getting new content."); } }] } 
+
+                    
                 ]);
+
+                self.ticketViewModel = new TicketViewModel();
 
                 /* METHODS */
 
-                self.selectMessage = function (message) {
-                    self.selectedMessage(message);
-                    self.bindShowHideButtons();
+                self.selectTicket = function (ticket) {
+                    self.selectedTicket(ticket);
                 };
 
                 self.resizeSidebar = function () {
                     var parts = document.querySelectorAll('.sidebar-part'), 
                         queue = document.querySelector('.sidebar-queue'),
-                        horizonalList = document.querySelector('.horizontal-list'),
                         header = document.querySelector('#header'), 
+                        drawer = document.querySelector('#ticket-drawer'),
                         height = 0;
 
                     for (var i = 0; i < parts.length; i++) {
@@ -401,11 +439,11 @@
                         height += p.scrollHeight;
                     }
 
-                    height += horizonalList.scrollHeight;
                     height += header.scrollHeight; 
 
                     var tmp = (window.innerHeight - height)
                     queue.style.height = tmp + 'px';
+                    drawer.style.height = (window.innerHeight - header.scrollHeight) + 'px';
                 };
 
                 self.bindShowHideButtons = function () {
@@ -455,6 +493,10 @@
         var app = new AppViewModel();
         ko.applyBindings(app);
     });
+
+
+    lorem = 'Pellentesque habitant morbi tristique senectus et netus et malesuada fames ac turpis egestas. Vestibulum tortor quam, feugiat vitae, ultricies eget, tempor sit amet, ante. Donec eu libero sit amet quam egestas semper. Aenean ultricies mi vitae est. Mauris placerat eleifend leo.';
+    lorem += lorem;
 
 </script>
     

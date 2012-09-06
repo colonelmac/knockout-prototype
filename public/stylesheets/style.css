@@ -64,7 +64,6 @@ html, body {
 }
 
 #status {
-    padding: 8px 10px;
     float: right;
     font-size: 12px;
 }
@@ -73,7 +72,9 @@ html, body {
     color: #FFF;
     text-decoration: none;
     float: left;
-    margin-left: 15px;
+    padding: 7px 7px;
+    border-left: 1px solid #557511;
+    border-right: 1px solid #B3C873;
 }
 
 #status a span {
@@ -85,19 +86,27 @@ html, body {
     width: 16px;
 }
 
-#manage span {
+#status #checkoff span {
+    background: transparent url("/public/images/checkoff.png") no-repeat 0 0;
+}
+
+#status #queue span {
+    background: transparent url("/public/images/application_side_list.png") no-repeat 0 0;
+}
+
+#status #manage span {
     background: transparent url("/public/images/manage.png") no-repeat 0 0;
 }
 
-#settings span {
+#status #settings span {
     background: transparent url("/public/images/cog.png") no-repeat 0 0;
 }
 
-#logout span {
+#status #logout span {
     background: transparent url("/public/images/logout.png") no-repeat 0 0;
 }
 
-#feedback span {
+#status #feedback span {
     background: transparent url("/public/images/email.png") no-repeat 0 0;
 }
 
