@@ -141,9 +141,6 @@ html, body {
 	height: 11px;
 	width: 11px;
 	margin-right: 5px;
-}
-
-.card-status-available {
 	background-image: url('available-small.png');
 }
 
