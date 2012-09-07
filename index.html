@@ -14,7 +14,14 @@
     <link rel="stylesheet" type="text/css" href="style.css" />
     <link rel="stylesheet" type="text/css" href="queue.css" />
     
+    <!--
     <script type="text/javascript" language="javascript"  src="/public/javascripts/jquery-1.7.1.min.js"></script>
+    -->
+
+    <script src="http://code.jquery.com/jquery-latest.js"></script>
+    <script src="http://jquery-ui.googlecode.com/svn/tags/latest/ui/jquery.effects.core.js"></script>
+    <script src="http://jquery-ui.googlecode.com/svn/tags/latest/ui/jquery.effects.slide.js"></script>
+
     <script type="text/javascript" language="javascript"  src="/public/javascripts/knockout-2.1.0.js"></script>
     <script type="text/javascript" language="javascript"  src="/public/javascripts/sammy/sammy-0.7.1.min.js"></script>
     <script type="text/javascript" language="javascript"  src="/public/javascripts/highcharts.js"></script>
@@ -44,7 +51,7 @@
     <div data-bind="template: state"></div>
 </div>
 
-<div id = "footer"></div>
+<div id="footer"></div>
 
 <!-- TEMPLATES -->
 
@@ -134,9 +141,22 @@
         </div>
 
         <div id="ticket-drawer">
-            <div class="ticket-drawer-content">
-                <div>this is the ticker drawer.</div>
-                <div>the ticket drawer will slide out when a ticket is clicked on the left</div>
+            <div class="ticket-drawer-content" data-bind="with: $root.queueViewModel.drawerViewModel.currentTicket()">
+                <ul class="ticket-drawer-info">
+                    <li class="ticket-drawer-info-name" data-bind="text: student().firstName + ' ' + student().lastName"></li>
+                    <li class="ticket-drawer-info-title" data-bind="text: title"></li>
+                    <li class="ticket-drawer-info-description" data-bind="text: description"></li>
+                </ul>
+
+                <br class="breaker" />
+
+                <ul class="ticket-drawer-actions">
+                    <li><button>Accept</button></li>
+                    <li><button>Close</button></li>
+                    <li><button>Could Not Find</button></li>
+                </ul>
+
+                <br class="breaker" />
             </div>
         </div>
  
@@ -164,20 +184,8 @@
     </div>
 </script>
 
-<script type="text/html" id="tutor-ticket-module-template">
-    <div class="tutor-ticket-content" >
-        
-    </div>
-</script>
-
-<script type="text/html" id="student-ticket-module-template">
-    <div class="student-ticket-content" >
-        
-    </div>
-</script>
-
-<script type="text/html" id="ticket-explorer-module-template">
-    <div class="ticket-explorer-content" >
+<script type="text/html" id="current-ticket-module-template">
+    <div class="current-ticket-content" >
         
     </div>
 </script>
@@ -377,7 +385,7 @@
             }
         };
 
-        var TicketViewModel = function () {
+        var DrawerViewModel = function () {
             var self = this;
 
             self.currentTicket = ko.observable(null);
@@ -404,7 +412,14 @@
 
                 self.selectedTicket.subscribe(function (ticket) {
                     if (ticket) {
-                        self.ticketViewModel.currentTicket(ticket);
+                        self.drawerViewModel.currentTicket(ticket);
+                    }
+
+                    var ticketDrawer = $('#ticket-drawer');
+
+                    if (!ticketDrawer.hasClass('ticket-drawer-open')) {
+                        ticketDrawer.show('slide', { direction: 'left'}, 500);
+                        ticketDrawer.addClass('ticket-drawer-open');
                     }
                 });
 
@@ -413,28 +428,19 @@
                 self.closed = ko.observable();
 
                 self.modules = ko.observableArray([
-                    { template: 'info-box-module-template', content_template: 'tutor-ticket-module-template',
-                        title: 'Current Ticket', classes: 'info-box-base info-box-right info-box-module',
-                        buttons: [{ text: 'Accept', click: function (e) { alert("You've been accepted."); } },
-                                  { text: 'Derp', click: function (e) { alert("You've been derped."); } }] },
-
-                    { template: 'info-box-module-template', title: 'Your Ticket(s)', content_template: 'student-ticket-module-template',
-                        classes: 'info-box-base info-box-right info-box-module', 
-                        buttons: [{ text: 'Create', click: function (e) { alert("You've created a ticket."); } }] },
-
-                    { template: 'info-box-module-template', content_template: 'ticket-explorer-module-template',
-                        title: 'Ticket Explorer', classes: 'info-box-base info-box-right info-box-module', 
+                    { template: 'info-box-module-template', content_template: 'current-ticket-module-template',
+                        title: 'Current Ticket', classes: 'info-box-base info-box-right info-box-small info-box-module',
                         buttons: [{ text: 'Accept', click: function (e) { alert("You've been accepted."); } },
                                   { text: 'Derp', click: function (e) { alert("You've been derped."); } }] },
 
                     { template: 'info-box-module-template', title: 'News', content_template: 'news-module-template',
-                        classes: 'info-box-base info-box-right info-box-module',
+                        classes: 'info-box-base info-box-right info-box-small info-box-module',
                         buttons: [{ text: 'Refresh', click: function (e) { alert("Getting new content."); } }] } 
 
                     
                 ]);
 
-                self.ticketViewModel = new TicketViewModel();
+                self.drawerViewModel = new DrawerViewModel();
 
                 /* METHODS */
 
@@ -468,7 +474,7 @@
 
                     height += header.scrollHeight; 
 
-                    var tmp = (window.innerHeight - height)
+                    var tmp = (window.innerHeight - height);
                     queue.style.height = tmp + 'px';
                     drawer.style.height = (window.innerHeight - header.scrollHeight) + 'px';
                 };
