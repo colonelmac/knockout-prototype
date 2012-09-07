@@ -51,28 +51,32 @@
 <script type="text/html" id="courses-template">
     <div id="cards" class="cards" data-bind="foreach: $root.cardViewModel.cards">
         <div class="card">
-            <div class="card-header">
-                <span class="card-header-icon"></span>
-                <h3 class="card-header-name"><a href="#" data-bind="text: name"></a></h3>
+            <div class="card-header" data-bind="click: function() { $root.cardViewModel.joinRoom($data) }">
+                <span class="card-header-status"></span>
+                <span class="card-header-enter"></span>
+                <h3 class="card-header-name"><a data-bind="text: name"></a></h3>
             </div>
             <div class="card-separator">
                 <span>TUTORS <span data-bind="text: '(' + tutors().length + ')'"></span></span>
             </div>
             <div class="card-tutors">
                 <ul data-bind="foreach: tutors">
-                    <li><span class="card-status" data-bind="css: { 'card-status-busy': status() === 'Busy', 'card-status-available': status() === 'Available' }">
-                    </span><span data-bind="text: name"></span>
-                    <span class="card-right"><span data-bind="text: hours"></span> hours</span></li>
+                    <li>
+                        <span class="card-status" data-bind="css: { 'card-status-busy': status() === 'Busy' }"></span>
+                        <span data-bind="text: name"></span>
+                        <span class="card-right"><span data-bind="text: hours"></span> hours</span>
+                    </li>
                 </ul>
             </div>
             <div class="card-separator">
                 <div class="card-title">
-                    <span class="title">QUEUE STATS</span>
+                    <span class="card-title-part">QUEUE STATS</span>
+                    <span class="card-title-part card-right card-graph-type" data-bind="click: function(){ graph($index, 'Wait') }">Wait</span>
+                    <span class="card-title-part card-right card-graph-type" data-bind="click: function(){ graph($index, 'Size') }">Size</span>
                 </div>
             </div>
-            <div class="card-part card-graph card-body" data-bind="graph: true"></div>
+            <div class="card-part card-graph card-body" data-bind="event: { load: graph($index, 'Size') }"></div>
             <div class="card-part card-footer">
-                <span class="card-button"><a data-bind="click: function () { $root.cardViewModel.joinRoom($data); }">ENTER</a></span>
                 <span class="card-close">Expected Close: 24 hours</span>
             </div>
         </div>
@@ -83,20 +87,24 @@
     <div id="queue"> 
         <div id="sidebar">
             <div class="sidebar-content">
-                <div class="sidebar-part sidebar-header">
+                <div class="sidebar-part sidebar-header" data-bind="click: function() { $root.state($root.states.COURSES) }" >
+                    <span class="sidebar-header-icon-leave"></span>
                     <span class="sidebar-header-icon"></span>
                     <span class="sidebar-header-name" data-bind="text: $root.queueViewModel.name"></span>
                     <br class="breaker" />
                 </div>
 
                 <div class="sidebar-part sidebar-separator">
-                    <span class="title">TUTORS</span>
+                    <span class="card-title-part">TUTORS</span>
                 </div>
 
                 <div class="sidebar-part sidebar-list sidebar-tutors">
                     <ul data-bind="foreach: $root.queueViewModel.tutors">
-                        <li><span></span><span data-bind="text: name"></span></li>
-                    </ul>
+                    <li>
+                        <span class="sidebar-tutors-status" data-bind="css: { 'sidebar-tutors-status-busy': status() === 'Busy' }"></span>
+                        <span data-bind="text: name"></span>
+                        <span class="card-right"><span data-bind="text: hours"></span> hours</span>
+                    </li>
                 </div>
 
                 <div class="sidebar-part sidebar-separator">
@@ -116,8 +124,8 @@
                 <div class="sidebar-list sidebar-queue">
                     <ul data-bind="foreach: $root.queueViewModel.tickets">
                         <li data-bind="click: $root.queueViewModel.selectTicket">
-                            <span class="sidebar-queue-item title" data-bind="text: student().firstName + ' ' + student().lastName"></span>
-                            <!-- <span class="sidebar-queue-item info" data-bind="text: description"></span> -->
+                            <span class="sidebar-queue-item-time">:<span data-bind="text: elapsed"></span></span>
+                            <span class="sidebar-queue-item title" data-bind="text: ($index() + 1) + '. ' + student().firstName + ' ' + student().lastName"></span>
                         </li>
                     </ul>   
                 </div>
@@ -133,10 +141,6 @@
         </div>
  
         <div id="main-content">
-            <div id="back-to-courses">
-                <a href="/"><span>&laquo; Back to Courses</span></a>
-            </div>
-
             <div style="width: 55%; float: right;" class="queue-modules" data-bind="foreach: $root.queueViewModel.modules">
                 <div data-bind="template: template"></div>
             </div>
@@ -190,13 +194,56 @@
 
     $(document).ready(function () {
 
-        ko.bindingHandlers.graph = {
-            update: function(element, v, a, viewModel) {
-                if ("graph" in viewModel) {
-                    viewModel.graph(element);
-                }
+        var GraphModel = function(data) {
+            var series    = [{ name: "Average", data: data.average }],
+                today     = new Date();
+            today.setHours(8);
+            if (!data.closed) {
+                series.push({ name: "Today", data: data.today });
             }
-        }
+            Highcharts.setOptions({ global: { useUTC: false } });
+            var graph = new Highcharts.Chart({
+                chart: {
+                    renderTo: data.element,
+                    type: "area",
+                    height: 300,
+                    spacingBottom: 0,
+                    spacingLeft: 0,
+                    spacingTop: 0,
+                    backgroundColor: "#ebf2d3",
+                },
+                tooltip: {
+                    xDateFormat: "%l %P",
+                    shared: true
+                },
+                series: series,
+                title: { text: data.title },
+                xAxis: {
+                    title: { text: "Hour" },
+                    type: "datetime",
+                    tickInterval: 1000 * 3600 * 2,
+                    dateTimeLabelFormats: {
+                        hour: "%l %P"
+                    }
+                },
+                yAxis: { title: { text: data.ytitle } },
+                legend: {
+                    align: "right",
+                    verticalAlign: "top",
+                    floating: true,
+                    layout: "vertical",
+                    backgroundColor: "#ebf2d3",
+                    y: 10
+                },
+                plotOptions: {
+                    area: {
+                        pointInterval: 1000 * 3600 * 2,
+                        pointStart: today.getTime()
+                    }
+                },
+                credits: { enabled: false }
+            });
+        };
 
         /*
          * CardModel - used to model the data represented on a card
@@ -205,79 +252,43 @@
          *  TutorModel
          */
 
-        var CardModel = function (n, t, s1, s2) {
+        var CardModel = function (n, t, s1, s2, w1, w2) {
             var self = this;
 
             self.name        = ko.observable(n);
             self.tutors      = ko.observableArray(t);
-            self.stats       = {
+            self.sizes       = {
                 today: ko.observableArray(s1),
                 average: ko.observableArray(s2)
             };
-
-            self.size        = ko.computed(function() {
-                return {
-                    today: self.stats.today()[self.stats.today().length-1][1],
-                    average: self.stats.average()[self.stats.average().length-1][1]
-                }
-                
-            });
-            self.wait        = ko.computed(function() {
-                return self.size();
-            });
+            self.waits       = {
+                today: ko.observableArray(w1),
+                average: ko.observableArray(w2)
+            };
 
             self.time        = ko.observable();
             self.isClosed    = ko.observable(false);
             self.close       = function (expected) { };
 
-            self.graph       = function (element) {
-                var series    = [{ name: "Average", data: self.stats.average() }],
-                    size      = self.size(),
-                    wait      = self.wait(),
-                    today     = new Date(),
-                    graph;
-                today.setHours(8);
-                if (!self.isClosed()) {
-                    series.push({ name: "Today", data: self.stats.today() });
+            self.graph       = function (index, type) {
+                var options = {
+                    element: $("div.card-graph")[index()],
+                    title: type,
+                    closed: self.isClosed(),
                 }
-                Highcharts.setOptions({ global: { useUTC: false } });
-                graph = new Highcharts.Chart({
-                    chart: {
-                        renderTo: element,
-                        type: "area",
-                        height: 300,
-                        spacingBottom: 0,
-                        spacingLeft: 0,
-                        spacingTop: 0,
-                        backgroundColor: "#ebf2d3",
-                    },
-                    tooltip: {
-                        xDateFormat: "%l %P",
-                        shared: true
-                    },
-                    series: series,
-                    title: { text: "Size" },
-                    xAxis: {
-                        title: { text: "Hour" },
-                        type: "datetime",
-                        tickInterval: 1000 * 3600 * 2,
-                        dateTimeLabelFormats: {
-                            hour: "%l %P"
-                        }
-
-                    },
-                    yAxis: { title: { text: "Number of people" } },
-                    plotOptions: {
-                        area: {
-                            pointInterval: 1000 * 3600 * 2,
-                            pointStart: today.getTime()
-                        }
-                    },
-                    credits: { enabled: false }
-                });
-                return true;
+                if (type === "Size") {
+                    options.ytitle = "Number of People";
+                    options.average = self.sizes.average();
+                    options.today = self.sizes.today();
+                } else {
+                    options.ytitle = "Wait Time (min.)";
+                    options.average = self.waits.average();
+                    options.today = self.waits.today();
+                }
+                console.log("Hi: " + type);
+                GraphModel(options);
             };
-        };
+        }
 
         /*
          * TutorModel - used to model the data represented on a tutor status
@@ -316,8 +327,10 @@
             self.title = title;
             self.description = description;
 
-            self.submited = new Date();
+            self.submitted = new Date();
             self.answered = ko.observable();
+
+            self.elapsed = ko.observable();
         };
 
         /*
@@ -333,8 +346,8 @@
                 savedCards = null;
 
             self.cards = ko.observableArray([
-                new CardModel('CSE 80', [new TutorModel('Herp Derpington', 'Busy', 2)], generateData(), generateData(20)), 
-                new CardModel('CSE 132A', [new TutorModel('Vinay V.', 'Available', 3)], generateData(), generateData(20))
+                new CardModel('CSE 80', [new TutorModel('Herp Derpington', 'Busy', 2)], generateData(), generateData(20), generateData(30), generateData(30)), 
+                new CardModel('CSE 132A', [new TutorModel('Vinay V.', 'Available', 3)], generateData(), generateData(20), generateData(30), generateData(30))
             ]);  
 
             self.joinRoom = function (card) {                
@@ -354,6 +367,8 @@
                     new TicketModel(new StudentModel('Calvin', 'Harris', 'waiting'), card.tutors()[0], 'I feel so close to you right now...', lorem),
                     new TicketModel(new StudentModel('Ambuj', 'Punn', 'waiting'), card.tutors()[0], 'Pure thug.', lorem)
                 ]); 
+
+                queueViewModel.updateElapsedTime();
             
                 app.state(app.states.QUEUE);
 
@@ -423,6 +438,18 @@
 
                 /* METHODS */
 
+                self.updateElapsedTime = function() {
+                    var now = Date.now();
+                    $.each(self.tickets(), function() {
+                        var delta = Math.round((now - this.submitted.getTime()) / (1000 * 60));
+                        console.log(delta);
+                        if (delta.toString().length === 1) {
+                            delta = "0" + delta.toString();
+                        }
+                        this.elapsed(delta);
+                    });
+                }
+
                 self.selectTicket = function (ticket) {
                     self.selectedTicket(ticket);
                 };
@@ -461,6 +488,8 @@
                         }
                     });
                 };
+
+                setInterval(self.updateElapsedTime, 60000);
         };
 
         /* This should be getting data from the server, but 

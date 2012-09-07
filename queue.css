@@ -51,15 +51,24 @@ div#sidebar {
 	text-align: left;
 	padding: 2px;
 	background-color: #9ABA00;
+    cursor: pointer;
 }
 
-.sidebar-header-icon {
+.sidebar-header:hover {
+    text-decoration: underline;
+}
+
+.sidebar-header-icon, .sidebar-header-icon-leave {
 	display: block;
 	float: left;
 	margin: 3px 0 0 5px;
 	height: 32px;
 	width: 33px;
 	background-image: url('available.png');
+}
+
+.sidebar-header-icon-leave {
+    background-image: url('leave.png');
 }
 
 .sidebar-header-name {
@@ -69,6 +78,7 @@ div#sidebar {
 	font-size: 28px;
 	font-weight: bold;	
 	text-shadow: 1px 1px 1px #222222;
+    text-decoration: inherit;
 	color: #FFF;
 }
 
@@ -104,13 +114,18 @@ div#sidebar {
 	font-size: 13px;
 }
 
-.sidebar-tutors ul li span:first-child {
+.sidebar-tutors-status {
 	display: inline-block;
 	height: 11px;
 	width: 11px;
 	background-image: url('available-small.png');
 	margin-right: 5px;
 }
+
+.sidebar-tutors-status-busy {
+    background-image: url('busy-small.png');
+}
+
 
 /* QUEUE */
 
@@ -124,6 +139,10 @@ div#sidebar {
 
 .sidebar-queue-item {
 	display: block;
+}
+
+.sidebar-queue-item-time {
+    float: right;
 }
 
 .sidebar-queue-item.selected {
@@ -163,11 +182,6 @@ div.info-box-base.info-box-variable-width-module {
     font-size: 14px;
 
     cursor: pointer;
-}
-
-#back-to-courses a {
-	color: #222;
-	text-decoration: none;
 }
 
 /* CURRENT TICKET */
