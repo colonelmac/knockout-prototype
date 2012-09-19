@@ -239,7 +239,6 @@
                 chart: {
                     renderTo: data.element,
                     type: "area",
-                    height: 300,
                     spacingBottom: 0,
                     spacingLeft: 0,
                     spacingTop: 0,
@@ -487,9 +486,22 @@
                 var usernames = user.getUsernames(),
                     cards   = [];
 
-                for (var i = 0; i < usernames.length; i++) {
-                    cards.push(new CardModel(usernames[i], [new TutorModel('Herp Derpington', 'Busy', 2)], generateData(), generateData(20), generateData(30), generateData(30)));
+                for (var i = 0; i < usernames.length-1; i++) {
+                    cards.push(new CardModel(usernames[i], [ new TutorModel('Herp Derpington', 'Busy', 2), ], generateData(), generateData(20), generateData(30), generateData(30)));
                 }
+
+                // Lotsa tutors on this one
+                cards.push(new CardModel(usernames[usernames.length-1], [ 
+                    new TutorModel('Herp Derpington', 'Busy', 2),
+                    new TutorModel('Herp Derpington', 'Busy', 2),
+                    new TutorModel('Herp Derpington', 'Busy', 2),
+                    new TutorModel('Herp Derpington', 'Busy', 2),
+                    new TutorModel('Herp Derpington', 'Busy', 2),
+                    new TutorModel('Herp Derpington', 'Busy', 2),
+                    new TutorModel('Herp Derpington', 'Busy', 2),
+                    new TutorModel('Herp Derpington', 'Busy', 2),
+                    new TutorModel('Herp Derpington', 'Busy', 2),
+                ], generateData(), generateData(20), generateData(30), generateData(30)));
 
                 return ko.observableArray(cards);
             })();   
