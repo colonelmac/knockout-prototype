@@ -42,7 +42,11 @@
         </div>
     </div>
 </div>
-    
+
+<div id="current-student">
+    Hello, <span data-bind="text: user.firstName"></span>!
+</div>
+
 <!-- <ul class="horizontal-list">
     <li><a href="/">Courses</a></li>
 </ul> -->
@@ -61,7 +65,7 @@
             <div class="card-header" data-bind="click: function() { $root.cardViewModel.joinRoom($data) }">
                 <span class="card-header-status"></span>
                 <span class="card-header-enter"></span>
-                <h3 class="card-header-name"><a data-bind="text: name"></a></h3>
+                <h3 class="card-header-name"><a data-bind="text: username().course.shortName"></a></h3>
             </div>
             <div class="card-separator">
                 <span>TUTORS <span data-bind="text: '(' + tutors().length + ')'"></span></span>
@@ -94,10 +98,10 @@
     <div id="queue"> 
         <div id="sidebar">
             <div class="sidebar-content">
-                <div class="sidebar-part sidebar-header" data-bind="click: function() { $root.state($root.states.COURSES) }" >
+                <div class="sidebar-part sidebar-header" data-bind="click: function() { $root.state(States.COURSES); }" >
                     <span class="sidebar-header-icon-leave"></span>
                     <span class="sidebar-header-icon"></span>
-                    <span class="sidebar-header-name" data-bind="text: $root.queueViewModel.name"></span>
+                    <span class="sidebar-header-name" data-bind="text: $root.queueViewModel.username().course.shortName"></span>
                     <br class="breaker" />
                 </div>
 
@@ -151,9 +155,9 @@
                 <br class="breaker" />
 
                 <ul class="ticket-drawer-actions">
-                    <li><button>Accept</button></li>
-                    <li><button>Close</button></li>
-                    <li><button>Could Not Find</button></li>
+                    <li><button data-bind="click: accept">Accept</button></li>
+                    <li><button data-bind="click: close">Close</button></li>
+                    <li><button data-bind="click: notFound">Could Not Find</button></li>
                 </ul>
 
                 <br class="breaker" />
@@ -185,8 +189,29 @@
 </script>
 
 <script type="text/html" id="current-ticket-module-template">
-    <div class="current-ticket-content" >
-        
+    <div class="current-ticket-content" data-bind="with: $root.queueViewModel">
+        <!-- ko if: acceptedTickets().length === 0 -->
+            No tickets currently accepted. Accept a ticket on your left.
+        <!-- /ko -->
+
+        <ul class="current-ticket-accepted" data-bind="foreach: acceptedTickets()">
+            <li class="current-ticket-line-item" data-bind="click: $root.queueViewModel.selectTicket">
+                <span data-bind="text: student().firstName + ' ' + student().lastName"></span>
+                <span data-bind="text: accepted"></span>
+            </li>
+        </ul>
+    </div>
+</script>
+
+<script type="text/html" id="your-ticket-module-tempate">
+    <div class="your-ticket-content">
+
+    </div>
+</script>
+
+<script type="text/html" id="statistics-module-tempate">
+    <div class="statistics-content">
+
     </div>
 </script>
 
@@ -253,17 +278,28 @@
             });
         };
 
-        /*
+        /**
+         * CourseModel 
+         */
+
+        var CourseModel = function (n, s) {
+            var self = this;
+
+            self.name = n;
+            self.shortName = s;
+        };
+
+        /**
          * CardModel - used to model the data represented on a card
          *
          * Dependencies:
          *  TutorModel
          */
 
-        var CardModel = function (n, t, s1, s2, w1, w2) {
+        var CardModel = function (u, t, s1, s2, w1, w2) {
             var self = this;
 
-            self.name        = ko.observable(n);
+            self.username    = ko.observable(u);
             self.tutors      = ko.observableArray(t);
             self.sizes       = {
                 today: ko.observableArray(s1),
@@ -293,7 +329,7 @@
                     options.average = self.waits.average();
                     options.today = self.waits.today();
                 }
-                console.log("Hi: " + type);
+                
                 GraphModel(options);
             };
         }
@@ -322,6 +358,79 @@
             self.status = ko.observable(s);    
         };
 
+        /**
+         * UserModel - designed to match Java server-side model
+         */
+
+        var UserModel = function (f, l, p, u) {
+            var self = this,
+                usernames = u;
+
+            self.firstName  = f;
+            self.lastName   = l;
+            self.pid        = p;
+
+            // usernames is is readonly
+            self.getUsernames = function () {
+                return usernames;
+            };
+        };
+
+        /**
+         * UsernameModel - designed to match Java server-side model
+         */
+
+        var UsernameModel = function (u, c, r) {
+            var self    = this,
+                roles   = r;
+
+            self.username   = u;
+            self.course     = c; 
+            
+            // roles is readonly
+            self.getRoles   = function () {
+                return roles;
+            };
+
+            /* METHODS */
+
+            self.isGraderOrInstructor = function () {
+                for (var i = 0; i < roles.length; i++) {
+                    if (roles[i].name === RoleModel.RoleTypes.GRADER || 
+                        roles[i].name === RoleModel.RoleTypes.INSTRUCTOR) {
+
+                        return true;
+                    }
+                }
+
+                return false;
+            };
+        };
+
+        /**
+         * RoleModel 
+         */
+
+        var RoleModel = function (t, s) {
+            var self = this;
+
+            self.name   = t;
+            self.status = s;
+        };
+
+        // Admin & Root omitted due to security issues
+        RoleModel.RoleTypes = {
+            GRADER:     'Grader',
+            INSTRUCTOR: 'Instructor',
+            STUDENT:    'Student'
+        };
+
+        RoleModel.RoleStatus = {
+            NONE:    '', 
+            DELETED: 'Deleted',
+            PENDING: 'Pending'
+        };
+
         /*
          * TicketModel
          */
@@ -335,10 +444,31 @@
             self.title = title;
             self.description = description;
 
-            self.submitted = new Date();
-            self.answered = ko.observable();
+            self.status = ko.observable(TicketModel.Statuses.PENDING);
 
+            self.accept = function (ticket) {
+                self.accepted(new Date());
+                app.queueViewModel.acceptedTickets.push(ticket);
+            };
+
+            self.close = function (ticket) {
+                alert('closing ticket');
+            };
+
+            self.notFound = function (ticket) {
+
+            };
+
+            self.submitted = new Date();
+            self.accepted = ko.observable();
+            self.solved = ko.observable();
             self.elapsed = ko.observable();
+        };
+
+        TicketModel.Statuses = {
+            ACCEPTED: 'Accepted',
+            PENDING: 'Pending',
+            SOLVED: 'Solved'
         };
 
         /*
@@ -349,21 +479,25 @@
          *  TutorModel
          */
 
-        var CardViewModel = function (queueViewModel) {
+        var CardViewModel = function (user, queueViewModel) {
             var self  = this,
                 savedCards = null;
 
-            self.cards = ko.observableArray([
-                new CardModel('CSE 80', [new TutorModel('Herp Derpington', 'Busy', 2)], generateData(), generateData(20), generateData(30), generateData(30)), 
-                new CardModel('CSE 132A', [new TutorModel('Vinay V.', 'Available', 3)], generateData(), generateData(20), generateData(30), generateData(30))
-            ]);  
+            self.cards = (function() {
+                var usernames = user.getUsernames(),
+                    cards   = [];
+
+                for (var i = 0; i < usernames.length; i++) {
+                    cards.push(new CardModel(usernames[i], [new TutorModel('Herp Derpington', 'Busy', 2)], generateData(), generateData(20), generateData(30), generateData(30)));
+                }
+
+                return ko.observableArray(cards);
+            })();   
 
             self.joinRoom = function (card) {                
-/*                saveCards();
-                self.cards(null);*/
-
                 queueViewModel.tutors(card.tutors());
-                queueViewModel.name(card.name());
+                queueViewModel.username(card.username());
+                queueViewModel.acceptedTickets([]);
 
                 queueViewModel.tickets([
                     new TicketModel(new StudentModel('Derrick','McMillen', 'waiting'), card.tutors()[0], 'Lost... no more hope', lorem),
@@ -378,7 +512,7 @@
 
                 queueViewModel.updateElapsedTime();
             
-                app.state(app.states.QUEUE);
+                app.state(States.QUEUE);
 
                 queueViewModel.resizeSidebar();
                 queueViewModel.bindShowHideButtons();
@@ -401,14 +535,16 @@
             var self = this;
 
                 /* FIELDS */
-
-                self.name = ko.observable();
+                
+                // username instead of name field
+                self.username = ko.observable();
 
                 self.tutors = ko.observableArray();
                 self.selectedTutor = ko.observable();
 
                 self.tickets = ko.observableArray([]);
                 self.selectedTicket = ko.observable();
+                self.acceptedTickets = ko.observableArray([]);
 
                 self.selectedTicket.subscribe(function (ticket) {
                     if (ticket) {
@@ -423,22 +559,53 @@
                     }
                 });
 
-
                 self.opened = ko.observable();
                 self.closed = ko.observable();
 
-                self.modules = ko.observableArray([
-                    { template: 'info-box-module-template', content_template: 'current-ticket-module-template',
-                        title: 'Current Ticket', classes: 'info-box-base info-box-right info-box-small info-box-module',
-                        buttons: [{ text: 'Accept', click: function (e) { alert("You've been accepted."); } },
-                                  { text: 'Derp', click: function (e) { alert("You've been derped."); } }] },
+                self.modules = ko.observable();
 
-                    { template: 'info-box-module-template', title: 'News', content_template: 'news-module-template',
-                        classes: 'info-box-base info-box-right info-box-small info-box-module',
-                        buttons: [{ text: 'Refresh', click: function (e) { alert("Getting new content."); } }] } 
+                self.username.subscribe(function() {
+                    var modules = [
+                        {   template:           'info-box-module-template', 
+                            content_template:   'statistics-module-tempate',
+                            classes:            'info-box-base info-box-right info-box-small info-box-module',
+                            title:              'Statistics',
+                            buttons:            [
+                                { text: 'Refresh', click: function (e) { alert('Yeah! Refresh!'); } },
+                            ]
+                        }, 
 
-                    
-                ]);
+                        {   template:           'info-box-module-template', 
+                            content_template:   'news-module-template',
+                            classes:            'info-box-base info-box-right info-box-small info-box-module',
+                            title:              'News', 
+                            buttons:            [
+                                { text: 'Refresh', click: function (e) { alert("Getting new content."); } }
+                            ] 
+                        } 
+                    ];
+
+                    if (self.username() && self.username().isGraderOrInstructor()) {
+                        modules.push({   template:           'info-box-module-template', 
+                                content_template:   'current-ticket-module-template',
+                                classes:            'info-box-base info-box-right info-box-small info-box-module',
+                                title:              'Current Ticket',
+                                buttons:            [] 
+                        });
+                    }
+                    else {
+                        modules.push({   template:           'info-box-module-template', 
+                            content_template:   'your-ticket-module-tempate',
+                            classes:            'info-box-base info-box-right info-box-small info-box-module',
+                            title:              'Your Ticket',
+                            buttons:            [
+                                { text: 'New Ticket', click: function (e) { alert('Yeah! New ticket!'); } },
+                            ]
+                        });
+                    }
+
+                    self.modules(modules);
+                }); 
 
                 self.drawerViewModel = new DrawerViewModel();
 
@@ -448,10 +615,11 @@
                     var now = Date.now();
                     $.each(self.tickets(), function() {
                         var delta = Math.round((now - this.submitted.getTime()) / (1000 * 60));
-                        console.log(delta);
+                        
                         if (delta.toString().length === 1) {
                             delta = "0" + delta.toString();
                         }
+                        
                         this.elapsed(delta);
                     });
                 }
@@ -513,16 +681,29 @@
         var AppViewModel = function () {
             var self = this;
 
-            self.states = {
-                COURSES: 'courses-template',
-                QUEUE: 'queue-template'
-            };
+            self.user = new UserModel('Derrick', 'McMillen', 'A01234567', 
+                [
+                    new UsernameModel('dmcmille', new CourseModel('UNIX Lab', 'CSE 80'), 
+                    [new RoleModel(RoleModel.RoleTypes.STUDENT, RoleModel.RoleStatus.NONE)]),
+                
+                    new UsernameModel('dmcmille', new CourseModel('Databases', 'CSE 132A'), 
+                    [new RoleModel(RoleModel.RoleTypes.STUDENT, RoleModel.RoleStatus.NONE)]),
 
-            self.state = ko.observable(self.states.COURSES);
-            self.selectedQueue = ko.observable(null);
+                    new UsernameModel('cs110f1', new CourseModel('Software Engineering', 'CSE 110'), 
+                    [new RoleModel(RoleModel.RoleTypes.GRADER, RoleModel.RoleStatus.NONE)]),
+                ]);
+
+            self.course = new ko.observable();
+
+            self.state = ko.observable(States.COURSES);
 
             self.queueViewModel = new QueueViewModel();
-            self.cardViewModel = new CardViewModel(self.queueViewModel);
+            self.cardViewModel = new CardViewModel(self.user, self.queueViewModel);
+        };
+
+        States = {
+            COURSES: 'courses-template',
+            QUEUE: 'queue-template'
         };
 
         var app = new AppViewModel();

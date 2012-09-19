@@ -170,10 +170,11 @@ div.info-box-base.info-box-variable-width-module {
 
 /* MISCELLANEOUS */
 
-#back-to-courses {
+#current-student {
 	padding: 5px;
 	position: absolute;
-	bottom: 2px;
+	top: 32px;
+	right: 2px;
 	padding: 5px;
 
 	background: #ddd;
@@ -185,6 +186,10 @@ div.info-box-base.info-box-variable-width-module {
 }
 
 /* CURRENT TICKET */
+
+.current-ticket-content {
+	font-size: 13px;
+}
 
 .current-ticket-content ul {
 	list-style: none;
