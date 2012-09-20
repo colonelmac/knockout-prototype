@@ -854,7 +854,7 @@ div.buttons {
     margin: 10px 0;
 }
 
-div.buttons a {
+div.buttons a, div.buttons button, div.buttons input[type=submit], .modern-button {
     color: #333;
     text-decoration: none;
     font-size: 12px;
@@ -865,6 +865,7 @@ div.buttons a {
     text-shadow: 0 1px 1px #FFF;
     background-color: #C8DD88;/* #C8DD88;*/
     border: 1px solid #9AB544;
+    cursor: pointer;
 }
 
 div.buttons a.expand span {
@@ -875,4 +876,30 @@ div.buttons a.expand span {
 div.buttons a.collapse span {
     background: transparent url("/public/images/collapse.png") no-repeat 0 0;
     padding-left: 16px;
+}
+
+/* MODAL */
+
+.modal {
+    font-family: verdana;
+    font-size: 13px;
+}
+
+.modal form ul {
+    list-style: none;
+    padding: none;
+    margin: none;
+}
+
+.modal form ul li {
+    margin-bottom: 10px;
+}
+
+.modal form textarea {
+    width: 100%;
+    border: 1px solid #CCC;
+}
+
+.modal label.checkbox-label {
+    padding-left: 3px;
 }

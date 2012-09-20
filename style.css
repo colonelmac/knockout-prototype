@@ -176,6 +176,10 @@ html, body {
     background-image: url('busy-small.png');
 }
 
+.card-status-invisible {
+    background-image: url('invisible-small.png');
+}
+
 .card-right {
     float: right;
 }

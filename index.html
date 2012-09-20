@@ -14,6 +14,8 @@
     <link rel="stylesheet" type="text/css" href="style.css" />
     <link rel="stylesheet" type="text/css" href="queue.css" />
     
+    <link rel="stylesheet" type="text/css" href="colorbox.css" />
+
     <!--
     <script type="text/javascript" language="javascript"  src="/public/javascripts/jquery-1.7.1.min.js"></script>
     -->
@@ -25,6 +27,12 @@
     <script type="text/javascript" language="javascript"  src="/public/javascripts/knockout-2.1.0.js"></script>
     <script type="text/javascript" language="javascript"  src="/public/javascripts/sammy/sammy-0.7.1.min.js"></script>
     <script type="text/javascript" language="javascript"  src="/public/javascripts/highcharts.js"></script>
+
+    <!-- https://github.com/phstc/jquery-dateFormat -->
+    <script type="text/javascript" language="javascript"  src="/public/javascripts/date-formatter.js"></script>
+
+    <!-- http://www.jacklmoore.com/colorbox -->
+    <script type="text/javascript" language="javascript"  src="/public/javascripts/jquery.colorbox-min.js"></script>
 </head>
 <body>
 
@@ -73,9 +81,13 @@
             <div class="card-tutors">
                 <ul data-bind="foreach: tutors">
                     <li>
-                        <span class="card-status" data-bind="css: { 'card-status-busy': status() === 'Busy' }"></span>
+                        <span class="card-status" data-bind="css: { 'card-status-available': status() === 'Available', 'card-status-busy': status() === 'Busy', 'card-status-invisible': status() === 'Invisible' }"></span>
                         <span data-bind="text: name"></span>
-                        <span class="card-right"><span data-bind="text: hours"></span> hours</span>
+                        <span class="card-right">
+                            <!-- ko if: hours -->
+                                <span data-bind="text: hours"></span> hours
+                            <!-- /ko -->
+                        </span>
                     </li>
                 </ul>
             </div>
@@ -111,14 +123,22 @@
 
                 <div class="sidebar-part sidebar-list sidebar-tutors">
                     <ul data-bind="foreach: $root.queueViewModel.tutors">
-                    <li>
-                        <span class="sidebar-tutors-status" data-bind="css: { 'sidebar-tutors-status-busy': status() === 'Busy' }"></span>
-                        <span class="card-right"><span data-bind="text: hours"></span> hours</span>
-                        <span class="sidebar-tutors-name" data-bind="text: name"></span><br/>
-                        <span class="sidebar-tutors-helping" data-bind="visible: helping()">↳ Helping: <span data-bind="text: helping() ? helping().fullName() : ''"></span></span>
-                    </li>
+                        <li>
+                            <span class="sidebar-tutors-status" data-bind="css: {   'sidebar-tutors-status-available': status() === 'Available', 
+                                                                                    'sidebar-tutors-status-busy': status() === 'Busy', 
+                                                                                    'sidebar-tutors-status-invisible':  status() === 'Invisible' }"></span>
+                            
+                            <!-- ko if: hours -->
+                            <span class="card-right"><span data-bind="text: hours"></span> hours</span>
+                            <!-- /ko -->
+                            
+                            <span class="sidebar-tutors-name" data-bind="text: name"></span><br/>
+                            <span class="sidebar-tutors-helping" data-bind="visible: helping()">↳ Helping: <span data-bind="text: helping() ? helping().fullName() : ''"></span></span>
+                        </li>
+                    </ul>
                 </div>
-
+                
+                <!--
                 <div class="sidebar-part sidebar-separator">
                     <span class="title">NOW SERVING</span>
                 </div>
@@ -128,7 +148,8 @@
                         <li><span></span><span data-bind="text: name"></span></li>
                     </ul>
                 </div>
-
+                -->
+                
                 <div class="sidebar-part sidebar-separator">
                     <span class="title">QUEUE</span>
                 </div>
@@ -155,11 +176,15 @@
 
                 <br class="breaker" />
 
-                <ul class="ticket-drawer-actions">
-                    <li><button data-bind="click: accept">Accept</button></li>
-                    <li><button data-bind="click: close">Close</button></li>
-                    <li><button data-bind="click: notFound">Could Not Find</button></li>
-                </ul>
+                <!-- ko if: $root.queueViewModel.username().isGraderOrInstructor() -->
+                    <div class="buttons">
+                        <ul class="ticket-drawer-actions" data-bind="with: $root.queueViewModel.drawerViewModel">
+                            <!-- ko foreach: buttons -->
+                                <li><button data-bind="click: click, text: text, style: { display: hidden() ? 'none' : 'block' }"></button></li>
+                            <!-- /ko -->
+                        </ul>
+                    </div>
+                <!-- /ko -->
 
                 <br class="breaker" />
             </div>
@@ -196,17 +221,21 @@
         <!-- /ko -->
 
         <ul class="current-ticket-accepted" data-bind="foreach: acceptedTickets()">
-            <li class="current-ticket-line-item" data-bind="click: $root.queueViewModel.selectTicket">
+            <li class="current-ticket-line-item" data-bind="click: $root.queueViewModel.selectTicket, 
+                                                            css: {  'current-ticket-line-item-accepted': status() === 'Accepted', 
+                                                                    'current-ticket-line-item-resolved': status() === 'Resolved' }">
                 <span data-bind="text: student().fullName()"></span>
-                <span data-bind="text: accepted"></span>
+                <span class="current-ticket-line-item-right" data-bind="text: 'Accepted at ' + $.format.date(accepted(), 'h:mm a')"></span>
             </li>
         </ul>
     </div>
 </script>
 
 <script type="text/html" id="your-ticket-module-tempate">
-    <div class="your-ticket-content">
-
+    <div class="your-ticket-content" data-bind="with: $root.queueViewModel">
+        <!-- ko if: acceptedTickets().length === 0 -->
+            No tickets currently pending. Open a ticket in the upper right.
+        <!-- /ko -->
     </div>
 </script>
 
@@ -221,6 +250,43 @@
         
     </div>
 </script>
+
+<!-- MODALS -->
+
+<div style="display: none">
+    <div id="resolve-ticket-modal" class="modal" style="padding:10px; background:#fff;" data-bind="with: $root.queueViewModel.drawerViewModel.currentTicket">
+        <form id="resolve-ticket-form">
+            <div style="text-align: center; padding-bottom: 10px; margin-bottom: 10px; ">You are attempting to resolve and close a ticket for <span data-bind="text: student().fullName"></span>.</div>
+            <ul>
+                <li>
+                    <label>Was the student's description accurate?</label>
+                    <input id="resolve-ticket-form-yes" class="resolve-ticket-form-radio" type="radio" name="accurate" checked /><label class="checkbox-label" for="resolve-ticket-form-yes">Yes</label>
+                    <input id="resolve-ticket-form-no" class="resolve-ticket-form-radio" type="radio" name="accurate" /><label class="checkbox-label" for="resolve-ticket-form-no">No</label>
+                </li>
+                <li><label for="">Comments (optional)</label></li>
+                <li><textarea id="resolve-ticket-form-comments" name="comments"></textarea></li>
+            </ul>
+            <div class="buttons">
+                <button id="resolve-ticket-form-submit" data-bind="click: resolve">Resolve Ticket</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div style="display: none">
+    <div id="close-ticket-modal" class="modal" style="padding:10px; background:#fff;" data-bind="with: $root.queueViewModel.drawerViewModel.currentTicket">
+        <form id="close-ticket-form">
+            <div style="text-align: center; padding-bottom: 10px; margin-bottom: 10px; ">Do you really want to close <span data-bind="text: student().fullName"></span>'s ticket? (currently unresolved)</div>
+            <ul>
+                <li><label for="">Comments (optional)</label></li>
+                <li><textarea id="close-ticket-form-comments" name="comments"></textarea></li>
+            </ul>
+            <div class="buttons">
+                <button id="close-ticket-form-submit" data-bind="click: close">Close Ticket</button>
+            </div>
+        </form>
+    </div>
+</div>
 
 <!-- SCRIPT -->
 
@@ -334,7 +400,7 @@
             };
         }
 
-        /*
+        /**
          * TutorModel - used to model the data represented on a tutor status
          */
 
@@ -347,7 +413,23 @@
             self.helping = ko.observable();
         };
 
-        /*
+        TutorModel.Statuses = {
+            AVAILABLE:  'Available',
+            BUSY:       'Busy',
+            INVISIBLE:  'Invisible'
+        };
+
+        /**
+         * Factory to return a new tutor given a user.
+         */
+
+        TutorModel.createTutor = function (user) {
+            return new TutorModel(user.firstName + ' ' + user.lastName, 
+                TutorModel.Statuses.INVISIBLE,
+                null);
+        };
+
+        /**
          * StudentModel
          */
        
@@ -356,6 +438,7 @@
             
             self.firstName = firstName;
             self.lastName = lastName;
+            self.fullName = self.firstName + ' ' + self.lastName;
 
             self.fullName = ko.computed(function() {
                 return self.firstName + " " + self.lastName;
@@ -454,29 +537,49 @@
 
             self.status = ko.observable(TicketModel.Statuses.PENDING);
 
-            self.accept = function (ticket) {
-                self.accepted(new Date());
-                app.queueViewModel.acceptedTickets.push(ticket);
-            };
-
-            self.close = function (ticket) {
-                alert('closing ticket');
-            };
-
-            self.notFound = function (ticket) {
-
-            };
-
             self.submitted = new Date();
             self.accepted = ko.observable();
             self.solved = ko.observable();
             self.elapsed = ko.observable();
+        
+            self.accept = function () {
+                self.status(TicketModel.Statuses.ACCEPTED);
+                self.accepted(new Date());
+                app.queueViewModel.acceptedTickets.push(self);
+            };
+
+            self.resolve = function () {
+                self.status(TicketModel.Statuses.RESOLVED);
+
+                app.queueViewModel.tickets.remove(self);
+                app.queueViewModel.acceptedTickets.remove(self);
+
+                var nextTicket = app.queueViewModel.tickets()[0];
+                app.queueViewModel.selectedTicket(typeof nextTicket === 'undefined' ? null : nextTicket);
+
+                $.colorbox.close();                
+            };
+
+            self.close = function (ticket) {
+                self.status(TicketModel.Statuses.CLOSED);
+                
+                app.queueViewModel.tickets.remove(self);
+                app.queueViewModel.acceptedTickets.remove(self);
+                app.queueViewModel.selectedTicket(app.queueViewModel.tickets()[0]);
+
+                $.colorbox.close();
+            };
+
+            self.notFound = function (ticket) {
+                  
+            };
         };
 
         TicketModel.Statuses = {
             ACCEPTED: 'Accepted',
             PENDING: 'Pending',
-            SOLVED: 'Solved'
+            RESOLVED: 'Resolved',
+            CLOSED: 'Closed'
         };
 
         /*
@@ -495,12 +598,12 @@
                 var usernames = user.getUsernames(),
                     cards   = [];
 
-                for (var i = 0; i < usernames.length-1; i++) {
-                    cards.push(new CardModel(usernames[i], [ new TutorModel('Herp Derpington', 'Busy', 2), ], generateData(), generateData(20), generateData(30), generateData(30)));
+                for (var i = 0; i < usernames.length; i++) {
+                    cards.push(new CardModel(usernames[i], [new TutorModel('Herp Derpington', TutorModel.Statuses.BUSY, 2)], generateData(), generateData(20), generateData(30), generateData(30)));
                 }
 
                 // Lotsa tutors on this one
-                cards.push(new CardModel(usernames[usernames.length-1], [ 
+/*                cards.push(new CardModel(usernames[usernames.length-1], [ 
                     new TutorModel('Herp Derpington', 'Busy', 2),
                     new TutorModel('Ierp Eerpington', 'Busy', 2),
                     new TutorModel('Jerp Ferpington', 'Busy', 2),
@@ -510,7 +613,7 @@
                     new TutorModel('Nerp Jerpington', 'Busy', 2),
                     new TutorModel('Oerp Kerpington', 'Busy', 2),
                     new TutorModel('Perp Lerpington', 'Busy', 2),
-                ], generateData(), generateData(20), generateData(30), generateData(30)));
+                ], generateData(), generateData(20), generateData(30), generateData(30)));*/
 
                 return ko.observableArray(cards);
             })();   
@@ -519,6 +622,10 @@
                 queueViewModel.tutors(card.tutors());
                 queueViewModel.username(card.username());
                 queueViewModel.acceptedTickets([]);
+
+                if (!queueViewModel.tutorHash[app.user.firstName + ' ' + app.user.lastName] && queueViewModel.username().isGraderOrInstructor()) {
+                    queueViewModel.tutors.push(new TutorModel.createTutor(app.user));
+                }
 
                 queueViewModel.tickets([
                     new TicketModel(new StudentModel('Derrick','McMillen', 'waiting'), card.tutors()[0], 'Lost... no more hope', lorem),
@@ -544,6 +651,58 @@
             var self = this;
 
             self.currentTicket = ko.observable(null);
+            self.currentTicket.subscribe(function (ticket) {
+                if (ticket == null) {
+                    var ticketDrawer = $('#ticket-drawer');
+
+                    if (ticketDrawer.hasClass('ticket-drawer-open')) {
+                        ticketDrawer.hide('slide', { direction: 'right'}, 500);
+                        ticketDrawer.remnoveClass('ticket-drawer-open');
+                    }
+                }
+
+                if (ticket.status() === TicketModel.Statuses.ACCEPTED) {
+                    acceptButton.hidden(true);
+                    resolveButton.hidden(false);
+                }
+                else {
+                    acceptButton.hidden(false);
+                    resolveButton.hidden(true);
+                }
+            });
+
+            var acceptButton = {   
+                    text: 'Accept',
+                    click: function () {
+                        acceptButton.hidden(true);
+                        resolveButton.hidden(false);
+
+                        self.currentTicket().accept();
+                    },
+                    hidden: ko.observable(false)
+                },
+                resolveButton = {   
+                    text: 'Resolve',
+                    click: function (ticket) {
+                        $.colorbox({ inline: true, href: '#resolve-ticket-modal', width: '33%', transition: 'none', title: 'Resolve Ticket' });
+                    },
+                    hidden: ko.observable(true)
+                },
+                closeButton = {   
+                    text: 'Close',
+                    click: function () {
+                        $.colorbox({ inline: true, href: '#close-ticket-modal', width: '33%', transition: 'none', title: 'Close Ticket' });
+                    },
+                    hidden: ko.observable(false)
+                },
+                notFoundButton = {   text: 'Could Not Find',
+                    click: function (ticket) {
+                        self.currentTicket().notFound();
+                    },
+                    hidden: ko.observable(false)
+                };
+
+            self.buttons = ko.observableArray([acceptButton, resolveButton, closeButton, notFoundButton]);
         };
 
         /*
@@ -562,6 +721,13 @@
 
                 self.tutors = ko.observableArray();
                 self.selectedTutor = ko.observable();
+
+                self.tutorHash = [];
+                self.tutors.subscribe(function (tutors) {
+                    for(var i = 0; i < tutors.length; i++) {
+                        self.tutorHash[tutors[i].name] = true;
+                    }
+                }); 
 
                 self.tickets = ko.observableArray([]);
                 self.selectedTicket = ko.observable();
@@ -607,15 +773,17 @@
                     ];
 
                     if (self.username() && self.username().isGraderOrInstructor()) {
-                        modules.push({   template:           'info-box-module-template', 
+                        modules.push({   
+                                template:           'info-box-module-template', 
                                 content_template:   'current-ticket-module-template',
-                                classes:            'info-box-base info-box-right info-box-small info-box-module',
-                                title:              'Current Ticket',
+                                classes:            'info-box-base info-box-right info-box-half-auto info-box-module',
+                                title:              'Current Ticket(s)',
                                 buttons:            [] 
                         });
                     }
                     else {
-                        modules.push({   template:           'info-box-module-template', 
+                        modules.push({   
+                            template:           'info-box-module-template', 
                             content_template:   'your-ticket-module-tempate',
                             classes:            'info-box-base info-box-right info-box-small info-box-module',
                             title:              'Your Ticket',

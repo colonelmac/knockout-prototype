@@ -143,6 +143,13 @@ div#sidebar {
     background-image: url('busy-small.png');
 }
 
+.sidebar-tutors-status-invisible {
+    background-image: url('invisible-small.png');
+}
+
+.sidebar-tutors-helping {
+	width: 100%;
+}
 
 /* QUEUE */
 
@@ -216,6 +223,36 @@ div.info-box-base.info-box-variable-width-module {
 	font-size: 12px;
 	font-weight: bold;
 	letter-spacing: 1px;
+}
+
+.current-ticket-line-item {
+	padding: 2px;
+	margin-bottom: 2px;
+    cursor: pointer;
+}
+
+.current-ticket-line-item:last-child {
+	margin-bottom: 0;
+}
+
+.current-ticket-line-item-right {
+	float: right;
+}
+
+.current-ticket-line-item-accepted {
+	background-color: #FEEFB3;
+    border: 1px solid #9F6000;
+}
+
+.current-ticket-line-item-resolved {
+	background-color: #C8DD88;
+    border: 1px solid #9AB544;
+}
+
+/* YOUR TICKET */
+
+.your-ticket-content {
+	font-size: 13px;
 }
 
 /* TICKET DRAWER */
