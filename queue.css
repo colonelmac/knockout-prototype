@@ -131,7 +131,7 @@ div#sidebar {
 	margin-right: 5px;
 }
 
-#sidebar-tutors-time-remaining {
+.sidebar-tutors-time-remaining {
     display: inline-block;
     height: 24px;
     width: 24px;
