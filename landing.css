@@ -1,0 +1,59 @@
+div.landing-block {
+    float: left;
+    padding: 5px;
+    background-color: #C8DD88;/* #C8DD88;*/
+    border: 1px solid #9AB544;
+    width: 150px;
+    height: 150px;
+    text-align: center;
+    margin: 10px;
+    cursor: pointer;
+}
+
+div#landing-manage span {
+    width: 48px;
+    height: 48px;
+    display: block;
+    margin: 20px auto;
+	background-image: url('manage.png')
+}
+
+div#landing-checkoff span {
+    width: 48px;
+    height: 48px;
+    display: block;
+    margin: 20px auto;
+	background-image: url('check.png')
+}
+
+div#landing-queue span {
+    width: 48px;
+    height: 48px;
+    display: block;
+    margin: 20px auto;
+	background-image: url('queue.png')
+}
+
+div.landing-block a {
+    padding: 5px;
+    color: #333;
+    letter-spacing: 1px;
+    text-shadow: 0 1px 1px #FFF;
+    text-decoration: none;
+    font-size: 15px;
+    font-weight: bold;
+    display: inline-block;
+}
+
+#landing-main {
+    clear: both;
+    max-width: 550px;
+    overflow: auto;
+    margin: 20px auto;
+    text-align: center;
+}
+
+#autograder {
+    overflow: hide;
+    width: 100px;
+}

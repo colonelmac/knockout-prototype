@@ -102,6 +102,10 @@ div#sidebar {
 	cursor: pointer;
 }
 
+.sidebar-tutors-helping {
+    margin-left: 20px;
+}
+
 .sidebar-tutors ul {
 	margin: 0;
 	padding: 0;
@@ -114,12 +118,25 @@ div#sidebar {
 	font-size: 13px;
 }
 
+.sidebar-tutors-name {
+    font-weight: bold;
+    font-size: 16px;
+}
+
 .sidebar-tutors-status {
 	display: inline-block;
 	height: 11px;
 	width: 11px;
 	background-image: url('available-small.png');
 	margin-right: 5px;
+}
+
+.sidebar-tutors-time-remaining {
+    display: inline-block;
+    height: 24px;
+    width: 24px;
+    background-image: url("clock.png");
+    margin-right: 10px;
 }
 
 .sidebar-tutors-status-busy {

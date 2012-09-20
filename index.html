@@ -106,15 +106,16 @@
                 </div>
 
                 <div class="sidebar-part sidebar-separator">
-                    <span class="card-title-part">TUTORS</span>
+                    <span class="card-title-part">TUTORS</span><span class="card-right sidebar-tutors-time-remaining" title="Remaining Time in Lab"></span>
                 </div>
 
                 <div class="sidebar-part sidebar-list sidebar-tutors">
                     <ul data-bind="foreach: $root.queueViewModel.tutors">
                     <li>
                         <span class="sidebar-tutors-status" data-bind="css: { 'sidebar-tutors-status-busy': status() === 'Busy' }"></span>
-                        <span data-bind="text: name"></span>
                         <span class="card-right"><span data-bind="text: hours"></span> hours</span>
+                        <span class="sidebar-tutors-name" data-bind="text: name"></span><br/>
+                        <span class="sidebar-tutors-helping" data-bind="visible: helping()">↳ Helping: <span data-bind="text: helping() ? helping().fullName() : ''"></span></span>
                     </li>
                 </div>
 
@@ -136,7 +137,7 @@
                     <ul data-bind="foreach: $root.queueViewModel.tickets">
                         <li data-bind="click: $root.queueViewModel.selectTicket">
                             <span class="sidebar-queue-item-time">:<span data-bind="text: elapsed"></span></span>
-                            <span class="sidebar-queue-item title" data-bind="text: ($index() + 1) + '. ' + student().firstName + ' ' + student().lastName"></span>
+                            <span class="sidebar-queue-item title" data-bind="text: ($index() + 1) + '. ' + student().fullName()"></span>
                         </li>
                     </ul>   
                 </div>
@@ -147,7 +148,7 @@
         <div id="ticket-drawer">
             <div class="ticket-drawer-content" data-bind="with: $root.queueViewModel.drawerViewModel.currentTicket()">
                 <ul class="ticket-drawer-info">
-                    <li class="ticket-drawer-info-name" data-bind="text: student().firstName + ' ' + student().lastName"></li>
+                    <li class="ticket-drawer-info-name" data-bind="text: student().fullName()"></li>
                     <li class="ticket-drawer-info-title" data-bind="text: title"></li>
                     <li class="ticket-drawer-info-description" data-bind="text: description"></li>
                 </ul>
@@ -196,7 +197,7 @@
 
         <ul class="current-ticket-accepted" data-bind="foreach: acceptedTickets()">
             <li class="current-ticket-line-item" data-bind="click: $root.queueViewModel.selectTicket">
-                <span data-bind="text: student().firstName + ' ' + student().lastName"></span>
+                <span data-bind="text: student().fullName()"></span>
                 <span data-bind="text: accepted"></span>
             </li>
         </ul>
@@ -239,7 +240,6 @@
                 chart: {
                     renderTo: data.element,
                     type: "area",
-                    height: 300,
                     spacingBottom: 0,
                     spacingLeft: 0,
                     spacingTop: 0,
@@ -341,9 +341,10 @@
         var TutorModel = function (n, s, h) {
             var self = this;
 
-            self.name   = n;
-            self.status = ko.observable(s); 
-            self.hours  = ko.observable(h);
+            self.name    = n;
+            self.status  = ko.observable(s); 
+            self.hours   = ko.observable(h);
+            self.helping = ko.observable();
         };
 
         /*
@@ -355,6 +356,11 @@
             
             self.firstName = firstName;
             self.lastName = lastName;
+
+            self.fullName = ko.computed(function() {
+                return self.firstName + " " + self.lastName;
+            });
+
             self.status = ko.observable(s);    
         };
 
@@ -441,6 +447,8 @@
             self.student = ko.observable(student);
             self.tutor = ko.observable(tutor);
 
+            tutor.helping(student);
+
             self.title = title;
             self.description = description;
 
@@ -487,9 +495,22 @@
                 var usernames = user.getUsernames(),
                     cards   = [];
 
-                for (var i = 0; i < usernames.length; i++) {
-                    cards.push(new CardModel(usernames[i], [new TutorModel('Herp Derpington', 'Busy', 2)], generateData(), generateData(20), generateData(30), generateData(30)));
+                for (var i = 0; i < usernames.length-1; i++) {
+                    cards.push(new CardModel(usernames[i], [ new TutorModel('Herp Derpington', 'Busy', 2), ], generateData(), generateData(20), generateData(30), generateData(30)));
                 }
+
+                // Lotsa tutors on this one
+                cards.push(new CardModel(usernames[usernames.length-1], [ 
+                    new TutorModel('Herp Derpington', 'Busy', 2),
+                    new TutorModel('Ierp Eerpington', 'Busy', 2),
+                    new TutorModel('Jerp Ferpington', 'Busy', 2),
+                    new TutorModel('Kerp Gerpington', 'Busy', 2),
+                    new TutorModel('Lerp Herpington', 'Busy', 2),
+                    new TutorModel('Merp Ierpington', 'Busy', 2),
+                    new TutorModel('Nerp Jerpington', 'Busy', 2),
+                    new TutorModel('Oerp Kerpington', 'Busy', 2),
+                    new TutorModel('Perp Lerpington', 'Busy', 2),
+                ], generateData(), generateData(20), generateData(30), generateData(30)));
 
                 return ko.observableArray(cards);
             })();   
@@ -633,7 +654,7 @@
                         queue = document.querySelector('.sidebar-queue'),
                         header = document.querySelector('#header'), 
                         drawer = document.querySelector('#ticket-drawer'),
-                        height = 0;
+                        height = 8; // still scrolls a bit if set to 0
 
                     for (var i = 0; i < parts.length; i++) {
                         var p = parts[i];
