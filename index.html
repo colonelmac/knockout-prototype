@@ -51,8 +51,33 @@
     </div>
 </div>
 
-<div id="current-student">
+<div class="current-user">
     Hello, <span data-bind="text: user.firstName"></span>!
+    
+    <!-- ko if: user.joined().length > 0 -->
+        <ul class="current-user-statuses" style="border-top: 1px dashed #888">
+            <!-- ko foreach: user.joined -->
+                <li>
+                    <span class="current-user-statuses-left" data-bind="text: course.shortName"></span>
+                    <span class="current-user-statuses-right">
+                        <span class="current-user-statuses-static">
+                            <a href="#" data-bind="text: status, click: showChangeStatus, 
+                                attr: { id: 'current-user-status-' + course.shortName.replace(' ', '-') }"></a>
+                        </span>
+                        <span style="display: none" data-bind="attr: { id: 'current-user-statuses-' + course.shortName.replace(' ', '-') }">
+                            <select class="current-user-statuses-select">
+                                <option>Available</option>
+                                <option>Invisible</option>
+                                <option>Offline</option>
+                            </select>
+                            <a href="#" class="modern-button modern-button-small" data-bind="click: changeStatus">Change</a>
+                            <a href="#" class="modern-button modern-button-small" data-bind="click: hideChangeStatus">Cancel</a>   
+                        </span>
+                    </span>
+                </li>
+            <!-- /ko -->
+        </ul>
+    <!-- /ko -->
 </div>
 
 <!-- <ul class="horizontal-list">
@@ -288,6 +313,19 @@
     </div>
 </div>
 
+<div style="display: none">
+    <div id="invisible-status-modal" class="modal" style="padding:10px; background:#fff;">
+            <div style="text-align: center; padding-bottom: 10px; margin-bottom: 10px; ">
+                You are currently invisible. You can not modify tickets while invisible. <br />
+                You can change your status in the upper right hand corner.
+            </div>
+            <!-- <div class="buttons modal-buttons-bar">
+                <button>Change to Available</button>
+                <button>Remain Invisible</button>
+            </div> -->
+    </div>
+</div>
+
 <!-- SCRIPT -->
 
 <script>
@@ -404,13 +442,55 @@
          * TutorModel - used to model the data represented on a tutor status
          */
 
-        var TutorModel = function (n, s, h) {
-            var self = this;
+        var TutorModel = function (n, s, h, c) {
+            var self = this, 
+                courseShortName, stuatusId, statusesId;
 
-            self.name    = n;
-            self.status  = ko.observable(s); 
-            self.hours   = ko.observable(h);
-            self.helping = ko.observable();
+            self.name       = n;
+            self.status     = ko.observable(s); 
+            self.hours      = ko.observable(h);
+            self.helping    = ko.observable();
+            self.course     = c;
+
+            self.showChangeStatus = function (tutor) {
+                $(statusesId).show();
+                $(statusId).hide();
+            };
+
+            self.hideChangeStatus = function (tutor) {
+                $(statusesId).hide();
+                $(statusId).show();
+            };
+
+            self.changeStatus = function (tutor) {
+                var select = $(statusesId + ' select')[0],
+                    selected   = select.options[select.selectedIndex];
+
+                switch(selected.value) {
+                    case 'Available':
+                        self.status(TutorModel.Statuses.AVAILABLE);
+                        break;
+                    case 'Invisible':
+                        self.status(TutorModel.Statuses.INVISIBLE);
+                        break;
+                    case 'Offline':
+                        app.queueViewModel.tutors.remove(self);
+                        app.user.joined.remove(self);
+                        break;
+                }
+
+                self.hideChangeStatus();
+            };
+
+            if (self.course) {
+                init();
+            }
+            
+            function init() {
+                courseShortName = self.course.shortName.replace(' ', '-');
+                statusId        = '#current-user-status-' + courseShortName;
+                statusesId      = '#current-user-statuses-' + courseShortName;
+            }
         };
 
         TutorModel.Statuses = {
@@ -423,10 +503,11 @@
          * Factory to return a new tutor given a user.
          */
 
-        TutorModel.createTutor = function (user) {
+        TutorModel.createTutor = function (user, course) {
             return new TutorModel(user.firstName + ' ' + user.lastName, 
                 TutorModel.Statuses.INVISIBLE,
-                null);
+                null,
+                course);
         };
 
         /**
@@ -457,7 +538,10 @@
 
             self.firstName  = f;
             self.lastName   = l;
+            self.fullName = self.firstName + ' ' + self.lastName;
             self.pid        = p;
+
+            self.joined     = ko.observableArray([]);
 
             // usernames is is readonly
             self.getUsernames = function () {
@@ -591,8 +675,7 @@
          */
 
         var CardViewModel = function (user, queueViewModel) {
-            var self  = this,
-                savedCards = null;
+            var self  = this;
 
             self.cards = (function() {
                 var usernames = user.getUsernames(),
@@ -624,7 +707,9 @@
                 queueViewModel.acceptedTickets([]);
 
                 if (!queueViewModel.tutorHash[app.user.firstName + ' ' + app.user.lastName] && queueViewModel.username().isGraderOrInstructor()) {
-                    queueViewModel.tutors.push(new TutorModel.createTutor(app.user));
+                    var tutor = new TutorModel.createTutor(app.user, card.username().course);
+                    app.user.joined.push(tutor);
+                    queueViewModel.tutors.push(tutor);
                 }
 
                 queueViewModel.tickets([
@@ -671,33 +756,59 @@
                 }
             });
 
+            // TODO: this is way too hacky 
+            // Need to rearchitect frontend to not need this
+            function warnIfInvisible() {
+                var tutors = app.user.joined();
+                
+                for (var i = 0; i < tutors.length; i++) {
+                    if (tutors[i].course.shortName === app.queueViewModel.username().course.shortName) {
+                        if (tutors[i].status() === TutorModel.Statuses.INVISIBLE) {
+                            $.colorbox({ inline: true, href: '#invisible-status-modal', width: '33%', transition: 'none', title: 'Unable to Accept Ticket' });
+                            
+                            return false;
+                        }
+                    }
+                }
+
+                return true;
+            }
+
             var acceptButton = {   
                     text: 'Accept',
                     click: function () {
-                        acceptButton.hidden(true);
-                        resolveButton.hidden(false);
+                        if (warnIfInvisible()) {
+                            acceptButton.hidden(true);
+                            resolveButton.hidden(false);
 
-                        self.currentTicket().accept();
+                            self.currentTicket().accept();
+                        }
                     },
                     hidden: ko.observable(false)
                 },
                 resolveButton = {   
                     text: 'Resolve',
                     click: function (ticket) {
-                        $.colorbox({ inline: true, href: '#resolve-ticket-modal', width: '33%', transition: 'none', title: 'Resolve Ticket' });
+                        if (warnIfInvisible()) {
+                            $.colorbox({ inline: true, href: '#resolve-ticket-modal', width: '33%', transition: 'none', title: 'Resolve Ticket' });
+                        }
                     },
                     hidden: ko.observable(true)
                 },
                 closeButton = {   
                     text: 'Close',
                     click: function () {
-                        $.colorbox({ inline: true, href: '#close-ticket-modal', width: '33%', transition: 'none', title: 'Close Ticket' });
+                        if (warnIfInvisible()) {
+                            $.colorbox({ inline: true, href: '#close-ticket-modal', width: '33%', transition: 'none', title: 'Close Ticket' });
+                        }
                     },
                     hidden: ko.observable(false)
                 },
                 notFoundButton = {   text: 'Could Not Find',
                     click: function (ticket) {
-                        self.currentTicket().notFound();
+                        if (warnIfInvisible()) {
+                            self.currentTicket().notFound();
+                        }
                     },
                     hidden: ko.observable(false)
                 };

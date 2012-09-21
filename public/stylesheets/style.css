@@ -505,7 +505,7 @@ a.edit span {
 
 .info-box-base {
     margin: 20px 0 0 0;
-    font-family: Droid Sans, sans-serif;
+    /*font-family: Droid Sans, sans-serif;*/
     text-align: left;
     border: 1px solid #888;
 }
@@ -876,6 +876,12 @@ div.buttons a.expand span {
 div.buttons a.collapse span {
     background: transparent url("/public/images/collapse.png") no-repeat 0 0;
     padding-left: 16px;
+}
+
+.modern-button.modern-button-small {
+    font-size: 9px;
+    padding: 2px;
+    font-weight: bold;
 }
 
 /* MODAL */

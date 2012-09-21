@@ -192,27 +192,49 @@ div.info-box-base.info-box-variable-width-module {
 	border-bottom: 1px solid #888;
 }
 
-/* MISCELLANEOUS */
+/* CURRENT USER */
 
-#current-student {
+.current-user {
 	padding: 5px;
 	position: absolute;
 	top: 32px;
 	right: 2px;
 	padding: 5px;
-
-	background: #ddd;
-	border: 1px solid #888;
-    
+	background: #eee;
+	border: 1px solid #888;    
     font-size: 14px;
+}
 
-    cursor: pointer;
+ul.current-user-statuses {
+	list-style: none;
+	padding-top: 5px;
+	width: 250px;
+}
+
+.current-user-statuses-left {
+
+}
+
+
+.current-user-statuses-right {
+	float: right;
+}
+
+
+.current-user-statuses-static a {
+	color: #663605;
+	text-decoration: none;
+}
+
+.current-user-statuses-select {
+
 }
 
 /* CURRENT TICKET */
 
 .current-ticket-content {
 	font-size: 13px;
+	font-family: verdana, sans-serif;
 }
 
 .current-ticket-content ul {
